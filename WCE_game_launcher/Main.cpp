@@ -26,7 +26,7 @@ namespace UI
 
 	// タイルの基本サイズ
 	//constexpr double TileSize = 250;
-	constexpr double TileSizeX = 376;
+	constexpr double TileSizeX = 370;
 	constexpr double TileSizeY = 235;
 
 	// 背景色
@@ -262,7 +262,7 @@ bool ContDown() {
 }
 
 bool ContA() {
-	if (KeySpace.down() || KeyEnter.down()) return true;
+	if (KeySpace.down() || (not KeyAlt.pressed() and KeyEnter.down())) return true;
 	if (XInput(0).isConnected()) {
 		if (XInput(0).buttonA.down()) return true;
 	}
@@ -271,6 +271,144 @@ bool ContA() {
 	}
 	return false;
 }
+
+struct ScrollBar
+{
+	RectF rect;
+	Optional<double> dragOffset;
+
+	double viewHeight = 600;
+	double pageHeight = 1000;
+	double viewTop = 0;
+	double viewVelocity = 0;
+
+	double accumulateTime = 0;
+	static constexpr double stepTime = 1.0 / 200;
+	static constexpr double resistance = 10;
+
+	Transition sliderWidthTransition = Transition(0.1s, 0.1s);
+
+	ScrollBar(const RectF& rect, double viewHeight, double pageHeight)
+		: rect(rect)
+		, viewHeight(viewHeight)
+		, pageHeight(pageHeight)
+	{
+
+	}
+
+	double sliderHeight() const
+	{
+		return Max(rect.h * viewHeight / pageHeight, 20.0);
+	}
+
+	double sliderYPerViewY() const
+	{
+		return (rect.h - sliderHeight()) / (pageHeight - viewHeight);
+	}
+
+	double sliderY() const
+	{
+		return viewTop * sliderYPerViewY();
+	}
+
+	RectF sliderRect() const
+	{
+		return RectF(rect.x, rect.y + sliderY(), rect.w, sliderHeight());
+	}
+
+	bool isSliderMouseOver() const
+	{
+		return sliderRect().stretched(5).mouseOver();
+	}
+
+	bool isSliderThick() const
+	{
+		return isSliderMouseOver() || dragOffset;
+	}
+
+	Transformer2D createTransformer() const
+	{
+		return Transformer2D(Mat3x2::Translate(0, -viewTop));
+	}
+
+	void scrollBy(double h) {
+		viewVelocity = resistance * h;
+	}
+
+	void scrollTopTo(double y) {
+		scrollBy(y - viewTop);
+	}
+
+	void scrollBottomTo(double y) {
+		scrollBy(y - viewTop - viewHeight);
+	}
+
+	void scrollCenterTo(double y) {
+		scrollBy(y - viewTop - viewHeight / 2);
+	}
+
+	void update(double wheel = Mouse::Wheel(), double delta = Scene::DeltaTime())
+	{
+
+		for (accumulateTime += delta; accumulateTime >= stepTime; accumulateTime -= stepTime)
+		{
+			if (not dragOffset) {
+				viewTop += viewVelocity * stepTime;
+			}
+
+			if (viewVelocity != 0)
+			{
+				viewVelocity += -viewVelocity * stepTime * resistance;
+			}
+		}
+
+		if (dragOffset)
+		{
+			const double prevTop = viewTop;
+			viewTop = (Cursor::PosF().y - *dragOffset) / sliderYPerViewY();
+			viewVelocity = (viewTop - prevTop) / delta;
+		}
+
+
+		if (isSliderMouseOver() and MouseL.down())
+		{
+			dragOffset = Cursor::PosF().y - sliderY();
+		}
+		else if (dragOffset && MouseL.up())
+		{
+			dragOffset.reset();
+		}
+
+		if (wheel) {
+			viewVelocity = wheel * 2000;
+		}
+
+		if (viewTop < 0)
+		{
+			viewTop = 0;
+			viewVelocity = 0;
+		}
+		else if (viewTop + viewHeight > pageHeight)
+		{
+			viewTop = pageHeight - viewHeight;
+			viewVelocity = 0;
+		}
+
+		sliderWidthTransition.update(isSliderThick());
+
+	}
+
+	void draw(const ColorF& color = Palette::Dimgray) const
+	{
+		double w = rect.w * (sliderWidthTransition.value() * 0.5 + 0.5);
+
+		RectF(rect.x - w + rect.w, rect.y + sliderY(), w, sliderHeight()).rounded(rect.w / 2).draw(color);
+	}
+
+	double progress0_1() {
+		return viewTop / (pageHeight - viewHeight);
+	}
+};
 
 void Main()
 {
@@ -305,7 +443,8 @@ void Main()
 	size_t selectGameIndex_last = 0;
 
 	// タイルのスクロール用の変数
-	double tileOffsetY = 0.0, targetTileOffsetY = 0.0, tileOffsetYVelocity = 0.0;
+	//double tileOffsetY = 0.0, targetTileOffsetY = 0.0, tileOffsetYVelocity = 0.0;
+
 
 	Texture background(Resource(U"resource/WCE_L.jpg"));
 
@@ -372,13 +511,17 @@ void Main()
 	Scene::Resize(1920, 1080);
 	Scene::SetResizeMode(ResizeMode::Keep);
 	Window::SetStyle(WindowStyle::Sizable);
-	Window::Maximize();
-	//Window::Resize(UI::WindowSize);
+	Window::Resize(Scene::Size()/2);
+	Window::SetFullscreen(true);
+	//Window::Maximize();
 	//Window::SetStyle(UI::Frameless ? WindowStyle::Frameless : WindowStyle::Fixed);
 	Scene::SetBackground(UI::BackgroundColor);
 
 	//Escキーを押しても終了しないようにする
 	System::SetTerminationTriggers(UserAction::CloseButtonClicked);
+
+
+	ScrollBar scrollBar(RectF(Scene::Width() - 12, 5, 10, Scene::Height() - 10), Scene::Height(), UI::TileSizeY * games.size() + UI::BaseTilePos.y - UI::TileSizeY / 2 + 30);
 
 	while (System::Update())
 	{
@@ -402,7 +545,8 @@ void Main()
 			{
 				// ウィンドウを復帰
 				Window::Restore();
-				Window::Maximize();
+				//Window::Maximize();
+				Window::SetFullscreen(true);
 				process.reset();
 				bgm.play();
 			}
@@ -473,9 +617,11 @@ void Main()
 		//
 		selectGameIndex_last = selectGameIndex;
 
+		scrollBar.update();
+
 		for (auto i : step(games.size()))
 		{
-			const Vec2 center = UI::BaseTilePos.movedBy(0, tileOffsetY + i * UI::TileSizeY);
+			const Vec2 center = UI::BaseTilePos.movedBy(0, -scrollBar.viewTop + i * UI::TileSizeY);
 			const RectF tile{ Arg::center = center, UI::TileSizeX - 20, UI::TileSizeY - 20 };
 
 			// タイルがクリックされたら選択
@@ -549,29 +695,31 @@ void Main()
 			else {
 				scale_screen = UI::ScreenArea.h / y;
 			}
+
+			///////////////////////////////////////////////
+			//
+			//	タイル表示のスクロール更新
+			//
+			{
+				const Vec2 center = UI::BaseTilePos.movedBy(0, -scrollBar.viewTop + selectGameIndex * UI::TileSizeY);
+				const RectF tile{ Arg::center = center, UI::TileSizeX - 20, UI::TileSizeY - 20 };
+
+				// 左端、右端のタイルが画面外ならスクロール
+				if (tile.y <= 0)
+				{
+					scrollBar.scrollTopTo(UI::BaseTilePos.y - UI::TileSizeY / 2 + selectGameIndex * UI::TileSizeY - 50);
+				}
+				else if (Scene::Height() <= tile.br().y)
+				{
+					scrollBar.scrollBottomTo(UI::BaseTilePos.y - UI::TileSizeY / 2 + (selectGameIndex + 1) * UI::TileSizeY +50);
+				}
+
+				// スムーズスクロール
+				//tileOffsetY = Math::SmoothDamp(tileOffsetY, targetTileOffsetY, tileOffsetYVelocity, 0.1);
+			}
 		}
 
-		///////////////////////////////////////////////
-		//
-		//	タイル表示のスクロール更新
-		//
-		{
-			const Vec2 center = UI::BaseTilePos.movedBy(0, targetTileOffsetY + selectGameIndex * UI::TileSizeY);
-			const RectF tile{ Arg::center = center, UI::TileSizeX - 20, UI::TileSizeY - 20 };
-
-			// 左端、右端のタイルが画面外ならスクロール
-			if (tile.y <= 0)
-			{
-				targetTileOffsetY += UI::TileSizeY;
-			}
-			else if (Scene::Height() <= tile.br().y)
-			{
-				targetTileOffsetY -= UI::TileSizeY;
-			}
-
-			// スムーズスクロール
-			tileOffsetY = Math::SmoothDamp(tileOffsetY, targetTileOffsetY, tileOffsetYVelocity, 0.1);
-		}
+		
 
 		///////////////////////////////////////////////
 		//
@@ -581,7 +729,7 @@ void Main()
 
 		for (auto [i, g] : Indexed(games))
 		{
-			const Vec2 center = UI::BaseTilePos.movedBy(0, tileOffsetY + i * UI::TileSizeY);
+			const Vec2 center = UI::BaseTilePos.movedBy(0, -scrollBar.viewTop + i * UI::TileSizeY);
 			const RectF tile{ Arg::center = center, UI::TileSizeX - 20, UI::TileSizeY - 20 };
 
 			// 選択されていたら、タイルの枠を描画
@@ -602,6 +750,8 @@ void Main()
 				Cursor::RequestStyle(CursorStyle::Hand);
 			}
 		}
+
+		scrollBar.draw();
 
 		// タイトルと説明
 		{
