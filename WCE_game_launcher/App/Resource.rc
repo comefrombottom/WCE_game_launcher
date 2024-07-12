@@ -127,7 +127,8 @@ Resource(engine/soundfont/GMGSx.sf2.zstdcmp)
 //
 //////////////////////////////////////////////////////
 
-
+Resource(resource/WCE_L.jpg)
+Resource(resource/bgm.mp3)
 
 /* examples 
 
