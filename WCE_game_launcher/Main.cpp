@@ -316,6 +316,11 @@ struct ScrollBar
 		return RectF(rect.x, rect.y + sliderY(), rect.w, sliderHeight());
 	}
 
+	bool existSlider() const
+	{
+		return viewHeight < pageHeight;
+	}
+
 	bool isSliderMouseOver() const
 	{
 		return sliderRect().stretched(5).mouseOver();
@@ -349,6 +354,12 @@ struct ScrollBar
 
 	void update(double wheel = Mouse::Wheel(), double delta = Scene::DeltaTime())
 	{
+		if (not existSlider()) {
+			viewTop = 0;
+			viewVelocity = 0;
+			dragOffset.reset();
+			sliderWidthTransition.reset();
+		}
 
 		for (accumulateTime += delta; accumulateTime >= stepTime; accumulateTime -= stepTime)
 		{
@@ -400,6 +411,8 @@ struct ScrollBar
 
 	void draw(const ColorF& color = Palette::Dimgray) const
 	{
+		if (not existSlider()) return;
+
 		double w = rect.w * (sliderWidthTransition.value() * 0.5 + 0.5);
 
 		RectF(rect.x - w + rect.w, rect.y + sliderY(), w, sliderHeight()).rounded(rect.w / 2).draw(color);
