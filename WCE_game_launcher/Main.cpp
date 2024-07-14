@@ -432,16 +432,28 @@ struct Menu {
 };
 
 class MenuSelector {
+public:
+	struct Menu {
+		Texture icon;
+		String name;
+		Color color;
+
+		bool mouseOvered = false;
+		Transition mouseOverTransition = Transition(0.1s, 0.1s);
+
+		bool pressed = false;
+		Transition pressedTransition = Transition(0.1s, 0.1s);
+
+		Menu(const Texture& icon, const String& name, const Color& color)
+			:icon(icon)
+			, name(name)
+			, color(color)
+		{}
+	};
+private:
+
 	Array<Menu> menus;
 	size_t selectMenuIndex = 0;
-
-	bool mouseOvered = false;
-	size_t mouseOverIndex = 0;
-	Transition mouseOverTransition = Transition(0.1s, 0.1s);
-
-	bool pressed = false;
-	size_t pressedIndex;
-	Transition pressedTransition = Transition(0.1s, 0.1s);
 
 	double selectedLineCenterX = 0;
 	double selectedLineVelocity = 0;
@@ -449,19 +461,20 @@ class MenuSelector {
 	double selectedTime = 10;
 
 
-	static constexpr Vec2 offset = Vec2(10, 5);
-	static constexpr double width = 160;
-	static constexpr double widthSpace = 10;
-	static constexpr double height = 45;
+
+	Vec2 offset = Vec2(10, 5);
+	Vec2 menuRectSize = { 160,45 };
+	double gap = 10;
 public:
 	MenuSelector() = default;
 
-	MenuSelector(std::initializer_list<Menu> menus) : menus(menus) {
-		selectedLineCenterX = getRect(0).centerX();
+	MenuSelector(const Array<Menu>& menus, const Vec2& offset = Vec2(10, 5), const Vec2 menuRectSize = { 160,45 }, double gap = 10)
+		: menus(menus), offset(offset), menuRectSize(menuRectSize), gap(gap)
+	{
 	}
 
 	RectF getRect(size_t i) const {
-		return RectF(offset.x + i * (width + widthSpace), offset.y, width, height);
+		return RectF(offset.x + i * (menuRectSize.x + gap), offset.y, menuRectSize);
 	}
 
 	size_t getSelectMenuIndex() const {
@@ -470,86 +483,62 @@ public:
 
 
 	void update() {
-		bool prevMouseOvered = mouseOvered;
-		mouseOvered = false;
 
-		bool prevPressed = pressed;
-		pressed = false;
-
-		for (auto [i, menu] : Indexed(menus)) {
+		for (auto [i, menu] : IndexedRef(menus)) {
 
 
 			RectF rect = getRect(i);
 
-			if (rect.mouseOver()) {
-				mouseOvered = true;
 
-				bool firstMouseOver = (not prevMouseOvered) or (mouseOverIndex != i);
-				if (firstMouseOver) {
-					mouseOverTransition.reset();
-				}
-				mouseOverIndex = i;
-			}
+			menu.mouseOvered = rect.mouseOver();
+			menu.mouseOverTransition.update(menu.mouseOvered);
 
-			if (rect.leftPressed()) {
-				pressed = true;
 
-				bool firstPressed = (not prevPressed) or (pressedIndex != i);
-				if (firstPressed) {
-					pressedTransition.reset();
-				}
-				pressedIndex = i;
-			}
+			menu.pressed = rect.leftPressed();
+			menu.pressedTransition.update(menu.pressed);
 
 			if (rect.leftClicked()) {
 				if (i != selectMenuIndex) {
 					selectedTime = 0;
 					selectMenuIndex = i;
 				}
-
 			}
 		}
 		selectedTime += Scene::DeltaTime();
 
-		mouseOverTransition.update(mouseOvered);
-		pressedTransition.update(pressed);
-
 		selectedLineCenterX = Math::SmoothDamp(selectedLineCenterX, selectMenuIndex * 1.0, selectedLineVelocity, 0.1);
 	}
 
-	void draw() const {
+	void draw(const Font& font, double fontSize) const {
 
 		for (auto [i, menu] : Indexed(menus)) {
 
 			RectF rect = getRect(i);
-			auto dtext = FontAsset(U"Game.Desc")(menu.name);
+			auto dtext = font(menu.name);
 			constexpr double buffer = 10;
-			Vec2 iconPos = rect.center().movedBy(-dtext.region(0, 0).w / 2 - buffer / 2, 0);
+			Vec2 iconPos = rect.center().movedBy(-dtext.region(fontSize).w / 2 - buffer / 2, 0);
 			Vec2 textPos = rect.center().movedBy(menu.icon.width() / 2 + buffer / 2, 0);
 
 			Color textColor = ColorF(0.6);
 
-			if (mouseOverIndex == i) {
-				if (mouseOvered) {
-					rect.stretched(mouseOverTransition.value() - 1).rounded(5)
-						.drawShadow(Vec2(0, 2), 5, 3, ColorF(0.7, mouseOverTransition.value() * 0.5))
-						.draw(ColorF(1, mouseOverTransition.value()));
-					textColor = ColorF(0.6).lerp(menu.color, mouseOverTransition.value());
-				}
-				else {
-					rect.stretched(mouseOverTransition.value() - 1).rounded(5)
-						.drawShadow(Vec2(0, 2), 5, 3, ColorF(0.7, mouseOverTransition.value() * 0.5))
-						.draw(ColorF(1, mouseOverTransition.value()))
-						.drawFrame(1, ColorF(0.7, mouseOverTransition.value()));
+			if (menu.mouseOvered) {
+				rect.stretched(menu.mouseOverTransition.value() - 1).rounded(5)
+					.drawShadow(Vec2(0, 2), 5, 3, ColorF(0.7, menu.mouseOverTransition.value() * 0.5))
+					.draw(ColorF(1, menu.mouseOverTransition.value()));
+				textColor = ColorF(0.6).lerp(menu.color, menu.mouseOverTransition.value());
+			}
+			else {
+				rect.stretched(menu.mouseOverTransition.value() - 1).rounded(5)
+					.drawShadow(Vec2(0, 2), 5, 3, ColorF(0.7, menu.mouseOverTransition.value() * 0.5))
+					.draw(ColorF(1, menu.mouseOverTransition.value()))
+					.drawFrame(1, ColorF(0.7, menu.mouseOverTransition.value()));
 
-				}
 			}
 
 			if (selectMenuIndex == i) {
 				Color rectColor = ColorF(1);
-				if (pressedIndex == i) {
-					rectColor = rectColor.lerp(ColorF(0.95), pressedTransition.value());
-				}
+				rectColor = rectColor.lerp(ColorF(0.95), menu.pressedTransition.value());
+
 
 				rect.rounded(5).draw(rectColor);
 				textColor = menu.color;
@@ -560,18 +549,18 @@ public:
 			else {
 				menu.icon.drawAt(iconPos, textColor);
 			}
-			dtext.drawAt(textPos, textColor);
+			dtext.drawAt(fontSize, textPos, textColor);
 		}
 
 
 
 
 
-		Vec2 selectedLineCenter = Vec2(offset.x + selectedLineCenterX * (width + widthSpace) + width / 2, offset.y + height + 5);
+		Vec2 selectedLineCenter = Vec2(offset.x + selectedLineCenterX * (menuRectSize.x + gap) + menuRectSize.x / 2, offset.y + menuRectSize.y + 5);
 
 		Color color;
 		{
-			size_t left = Max(0.0, Floor(selectedLineCenterX));
+			size_t left = static_cast<size_t>(Max(0.0, Floor(selectedLineCenterX)));
 			double t = selectedLineCenterX - left;
 			Color leftColor = left < menus.size() ? menus[left].color : Palette::Black;
 			Color rightColor = left + 1 < menus.size() ? menus[left + 1].color : Palette::Black;
@@ -579,9 +568,12 @@ public:
 			color = leftColor.lerp(rightColor, t);
 		}
 
-		RectF(Arg::center = selectedLineCenter, width * 0.9, 4).rounded(2).draw(color);
+		RectF(Arg::center = selectedLineCenter, menuRectSize.x * 0.9, 2).rounded(1).draw(color);
 	}
 
+	void draw(const Font& font) const {
+		draw(font, font.fontSize());
+	}
 };
 
 
@@ -1016,9 +1008,11 @@ void Main()
 
 
 	MenuSelector menuSelector{
-		{Texture{0Xf11b_icon,40}, U"ゲーム", Palette::Royalblue},
-		{Texture{0Xf001_icon,40}, U"音楽", Palette::Hotpink},
-		{Texture{0Xf53f_icon,40}, U"イラスト", Palette::Limegreen}
+		{
+			{Texture{0Xf11b_icon,40}, U"ゲーム", Palette::Royalblue},
+			{Texture{0Xf001_icon,40}, U"音楽", Palette::Hotpink},
+			{Texture{0Xf53f_icon,40}, U"イラスト", Palette::Limegreen}
+		}
 	};
 
 	Texture closeIcon(0xf2f5_icon, 40);
@@ -1065,7 +1059,7 @@ void Main()
 		menuBar.drawShadow(Vec2(0, 3), 8);
 		menuBar.draw(ColorF(0.9));
 
-		menuSelector.draw();
+		menuSelector.draw(FontAsset(U"Game.Desc"));
 
 
 		{
