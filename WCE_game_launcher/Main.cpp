@@ -288,6 +288,8 @@ struct ScrollBar
 
 	Transition sliderWidthTransition = Transition(0.1s, 0.1s);
 
+	ScrollBar() = default;
+
 	ScrollBar(const RectF& rect, double viewHeight, double pageHeight)
 		: rect(rect)
 		, viewHeight(viewHeight)
@@ -423,29 +425,170 @@ struct ScrollBar
 	}
 };
 
-void Main()
-{
-	// フォント
-	FontAsset::Register(U"Game.Title", 42, Typeface::Heavy);
-	FontAsset::Register(U"Game.Desc", 26);
-	FontAsset::Register(U"Game.Small", 16);
-	FontAsset::Register(U"Game.Play", 30, Typeface::Heavy);
+struct Menu {
+	Texture icon;
+	String name;
+	Color color;
+};
 
-	FontAsset::Register(U"Game.End", 100, Typeface::Heavy);
+class MenuSelector {
+	Array<Menu> menus;
+	size_t selectMenuIndex = 0;
 
-	// 再生アイコン
-	TextureAsset::Register(U"Icon.Play", 0xf144_icon, 48);
+	bool mouseOvered = false;
+	size_t mouseOverIndex = 0;
+	Transition mouseOverTransition = Transition(0.1s, 0.1s);
 
-	//end icon
-	TextureAsset::Register(U"Icon.End", 0xf2f5_icon, 48);
+	bool pressed = false;
+	size_t pressedIndex;
+	Transition pressedTransition = Transition(0.1s, 0.1s);
 
-	// ゲーム情報
-	const Array<Game> games = LoadGames();
-	if (not games)
-	{
-		System::MessageBoxOK(U"ゲームがありません。");
-		return;
+	double selectedLineCenterX = 0;
+	double selectedLineVelocity = 0;
+
+	double selectedTime = 10;
+
+
+	static constexpr Vec2 offset = Vec2(10, 5);
+	static constexpr double width = 160;
+	static constexpr double widthSpace = 10;
+	static constexpr double height = 45;
+public:
+	MenuSelector() = default;
+
+	MenuSelector(std::initializer_list<Menu> menus) : menus(menus) {
+		selectedLineCenterX = getRect(0).centerX();
 	}
+
+	RectF getRect(size_t i) const {
+		return RectF(offset.x + i * (width + widthSpace), offset.y, width, height);
+	}
+
+	size_t getSelectMenuIndex() const {
+		return selectMenuIndex;
+	}
+
+
+	void update() {
+		bool prevMouseOvered = mouseOvered;
+		mouseOvered = false;
+
+		bool prevPressed = pressed;
+		pressed = false;
+
+		for (auto [i, menu] : Indexed(menus)) {
+
+
+			RectF rect = getRect(i);
+
+			if (rect.mouseOver()) {
+				mouseOvered = true;
+
+				bool firstMouseOver = (not prevMouseOvered) or (mouseOverIndex != i);
+				if (firstMouseOver) {
+					mouseOverTransition.reset();
+				}
+				mouseOverIndex = i;
+			}
+
+			if (rect.leftPressed()) {
+				pressed = true;
+
+				bool firstPressed = (not prevPressed) or (pressedIndex != i);
+				if (firstPressed) {
+					pressedTransition.reset();
+				}
+				pressedIndex = i;
+			}
+
+			if (rect.leftClicked()) {
+				if (i != selectMenuIndex) {
+					selectedTime = 0;
+					selectMenuIndex = i;
+				}
+
+			}
+		}
+		selectedTime += Scene::DeltaTime();
+
+		mouseOverTransition.update(mouseOvered);
+		pressedTransition.update(pressed);
+
+		selectedLineCenterX = Math::SmoothDamp(selectedLineCenterX, selectMenuIndex * 1.0, selectedLineVelocity, 0.1);
+	}
+
+	void draw() const {
+
+		for (auto [i, menu] : Indexed(menus)) {
+
+			RectF rect = getRect(i);
+			auto dtext = FontAsset(U"Game.Desc")(menu.name);
+			constexpr double buffer = 10;
+			Vec2 iconPos = rect.center().movedBy(-dtext.region(0, 0).w / 2 - buffer / 2, 0);
+			Vec2 textPos = rect.center().movedBy(menu.icon.width() / 2 + buffer / 2, 0);
+
+			Color textColor = ColorF(0.6);
+
+			if (mouseOverIndex == i) {
+				if (mouseOvered) {
+					rect.stretched(mouseOverTransition.value() - 1).rounded(5)
+						.drawShadow(Vec2(0, 2), 5, 3, ColorF(0.7, mouseOverTransition.value() * 0.5))
+						.draw(ColorF(1, mouseOverTransition.value()));
+					textColor = ColorF(0.6).lerp(menu.color, mouseOverTransition.value());
+				}
+				else {
+					rect.stretched(mouseOverTransition.value() - 1).rounded(5)
+						.drawShadow(Vec2(0, 2), 5, 3, ColorF(0.7, mouseOverTransition.value() * 0.5))
+						.draw(ColorF(1, mouseOverTransition.value()))
+						.drawFrame(1, ColorF(0.7, mouseOverTransition.value()));
+
+				}
+			}
+
+			if (selectMenuIndex == i) {
+				Color rectColor = ColorF(1);
+				if (pressedIndex == i) {
+					rectColor = rectColor.lerp(ColorF(0.95), pressedTransition.value());
+				}
+
+				rect.rounded(5).draw(rectColor);
+				textColor = menu.color;
+			}
+			if (selectedTime < 1.0 && selectMenuIndex == i) {
+				menu.icon.rotated(exp(-7 * selectedTime) * sin(15 * selectedTime) * 0.9).drawAt(iconPos, textColor);
+			}
+			else {
+				menu.icon.drawAt(iconPos, textColor);
+			}
+			dtext.drawAt(textPos, textColor);
+		}
+
+
+
+
+
+		Vec2 selectedLineCenter = Vec2(offset.x + selectedLineCenterX * (width + widthSpace) + width / 2, offset.y + height + 5);
+
+		Color color;
+		{
+			size_t left = Max(0.0, Floor(selectedLineCenterX));
+			double t = selectedLineCenterX - left;
+			Color leftColor = left < menus.size() ? menus[left].color : Palette::Black;
+			Color rightColor = left + 1 < menus.size() ? menus[left + 1].color : Palette::Black;
+
+			color = leftColor.lerp(rightColor, t);
+		}
+
+		RectF(Arg::center = selectedLineCenter, width * 0.9, 4).rounded(2).draw(color);
+	}
+
+};
+
+
+class GameMenu {
+	
+	// ゲーム情報
+	Array<Game> games;
 
 	// 実行中のゲームのプロセス
 	Optional<ChildProcess> process;
@@ -458,8 +601,7 @@ void Main()
 	// タイルのスクロール用の変数
 	//double tileOffsetY = 0.0, targetTileOffsetY = 0.0, tileOffsetYVelocity = 0.0;
 
-
-	Texture background(Resource(U"resource/WCE_L.jpg"));
+	Texture background;
 
 	double wait = 0;
 
@@ -467,11 +609,7 @@ void Main()
 
 	bool isPlayed = false;
 
-	Audio bgm{ Resource(U"resource/bgm.mp3"), Loop::Yes };
-
-	bgm.setLoopPoint(0.03s);
-
-	bgm.play();
+	Audio bgm;
 
 	//TextEditState com;
 
@@ -495,49 +633,53 @@ void Main()
 
 	double scale_screen;
 
-	{
-		double ratioS = UI::ScreenArea.w / UI::ScreenArea.h;
-		double ratio;
-		double x;
-		double y;
-		if (games[0].isVideo) {
-			screen_video = VideoTexture{ games[0].screen_file, Loop::Yes };
-			x = screen_video.size().x;
-			y = screen_video.size().y;
+	ScrollBar scrollBar;
+
+public:
+	GameMenu(){
+		games = LoadGames();
+		if (not games)
+		{
+			System::MessageBoxOK(U"ゲームがありません。");
+			return;
 		}
-		else {
-			screen_image = Texture{ games[0].screen_file, TextureDesc::Mipped };
-			x = screen_image.size().x;
-			y = screen_image.size().y;
+
+		background = Texture(Resource(U"resource/WCE_L.jpg"));
+
+		bgm = Audio{ Resource(U"resource/bgm.mp3"), Loop::Yes };
+
+		bgm.setLoopPoint(0.03s);
+
+		//bgm.play();
+
+		{
+			double ratioS = UI::ScreenArea.w / UI::ScreenArea.h;
+			double ratio;
+			double x;
+			double y;
+			if (games[0].isVideo) {
+				screen_video = VideoTexture{ games[0].screen_file, Loop::Yes };
+				x = screen_video.size().x;
+				y = screen_video.size().y;
+			}
+			else {
+				screen_image = Texture{ games[0].screen_file, TextureDesc::Mipped };
+				x = screen_image.size().x;
+				y = screen_image.size().y;
+			}
+			ratio = x / y;
+			if (ratio >= ratioS) {
+				scale_screen = UI::ScreenArea.w / x;
+			}
+			else {
+				scale_screen = UI::ScreenArea.h / y;
+			}
 		}
-		ratio = x / y;
-		if (ratio >= ratioS) {
-			scale_screen = UI::ScreenArea.w / x;
-		}
-		else {
-			scale_screen = UI::ScreenArea.h / y;
-		}
+
+		scrollBar = ScrollBar(RectF(Scene::Width() - 12, 5 + 60, 10, Scene::Height() - 10 - 60), Scene::Height(), UI::TileSizeY * games.size() + UI::BaseTilePos.y - UI::TileSizeY / 2 + 30);
 	}
 
-	// ウィンドウと背景色
-	Window::SetTitle(U"WCE GAMES 2023");
-	Scene::Resize(1920, 1080);
-	Scene::SetResizeMode(ResizeMode::Keep);
-	Window::SetStyle(WindowStyle::Sizable);
-	Window::Resize(Scene::Size()/2);
-	Window::SetFullscreen(true);
-	//Window::Maximize();
-	//Window::SetStyle(UI::Frameless ? WindowStyle::Frameless : WindowStyle::Fixed);
-	Scene::SetBackground(UI::BackgroundColor);
-
-	//Escキーを押しても終了しないようにする
-	System::SetTerminationTriggers(UserAction::CloseButtonClicked);
-
-
-	ScrollBar scrollBar(RectF(Scene::Width() - 12, 5, 10, Scene::Height() - 10), Scene::Height(), UI::TileSizeY * games.size() + UI::BaseTilePos.y - UI::TileSizeY / 2 + 30);
-
-	while (System::Update())
-	{
+	void update() {
 		// 現在選択されているゲーム
 		const Game& game = games[selectGameIndex];
 		///////////////////////////////////////////////
@@ -552,7 +694,7 @@ void Main()
 				// ウィンドウを最小化
 				Window::Minimize();
 				bgm.stop();
-				continue;
+				return;
 			}
 			else // プロセスが終了したら
 			{
@@ -724,21 +866,27 @@ void Main()
 				}
 				else if (Scene::Height() <= tile.br().y)
 				{
-					scrollBar.scrollBottomTo(UI::BaseTilePos.y - UI::TileSizeY / 2 + (selectGameIndex + 1) * UI::TileSizeY +50);
+					scrollBar.scrollBottomTo(UI::BaseTilePos.y - UI::TileSizeY / 2 + (selectGameIndex + 1) * UI::TileSizeY + 50);
 				}
 
 				// スムーズスクロール
 				//tileOffsetY = Math::SmoothDamp(tileOffsetY, targetTileOffsetY, tileOffsetYVelocity, 0.1);
 			}
 		}
+	}
 
-		
+	void draw() {
+
+		const Game& game = games[selectGameIndex];
 
 		///////////////////////////////////////////////
 		//
 		//	描画
 		//
-		background.scaled(0.91).draw();
+		//background.scaled(0.91).draw();
+
+
+
 
 		for (auto [i, g] : Indexed(games))
 		{
@@ -831,6 +979,102 @@ void Main()
 		//
 		{
 			//FontAsset(U"Game.Title")(U"{:0>2}:{:0>2}"_fmt(timer.min(), timer.s()%60)).draw(Vec2(30, 1020), Palette::White);
+		}
+	}
+};
+
+void Main()
+{
+	// フォント
+	FontAsset::Register(U"Game.Title", 42, Typeface::Heavy);
+	FontAsset::Register(U"Game.Desc", 26);
+	FontAsset::Register(U"Game.Small", 16);
+	FontAsset::Register(U"Game.Play", 30, Typeface::Heavy);
+
+	FontAsset::Register(U"Game.End", 100, Typeface::Heavy);
+
+	// 再生アイコン
+	TextureAsset::Register(U"Icon.Play", 0xf144_icon, 48);
+
+	//end icon
+	TextureAsset::Register(U"Icon.End", 0xf2f5_icon, 48);
+
+
+	// ウィンドウと背景色
+	Window::SetTitle(U"WCE GAMES 2024");
+	Scene::Resize(1920, 1080);
+	Scene::SetResizeMode(ResizeMode::Keep);
+	Window::SetStyle(WindowStyle::Sizable);
+	//Window::Maximize();
+	//Window::SetStyle(UI::Frameless ? WindowStyle::Frameless : WindowStyle::Fixed);
+	Scene::SetBackground(UI::BackgroundColor);
+
+	//Escキーを押しても終了しないようにする
+	System::SetTerminationTriggers(UserAction::CloseButtonClicked);
+
+	
+
+
+	MenuSelector menuSelector{
+		{Texture{0Xf11b_icon,40}, U"ゲーム", Palette::Royalblue},
+		{Texture{0Xf001_icon,40}, U"音楽", Palette::Hotpink},
+		{Texture{0Xf53f_icon,40}, U"イラスト", Palette::Limegreen}
+	};
+
+	Texture closeIcon(0xf2f5_icon, 40);
+
+	RectF menuBar(0, 0, Scene::Width(), 60);
+
+	GameMenu gameMenu;
+
+
+	Window::Resize(Scene::Size() / 2);
+	Window::SetFullscreen(true);
+
+	while (System::Update())
+	{
+
+		menuSelector.update();
+
+
+		{
+			RectF exitRect(Scene::Width() - 80, 5, 60, 45);
+
+			if (exitRect.leftClicked()) {
+				MessageBoxResult result = System::MessageBoxOKCancel(U"終了しますか？", MessageBoxStyle::Question);
+				if (result == MessageBoxResult::OK) {
+					System::Exit();
+				}
+			}
+		}
+
+		if (menuBar.leftClicked()) {
+			MouseL.clearInput();
+		}
+
+		switch (menuSelector.getSelectMenuIndex())
+		{
+		case 0:
+			gameMenu.update();
+			gameMenu.draw();
+			break;
+		default:
+			break;
+		}
+
+		menuBar.drawShadow(Vec2(0, 3), 8);
+		menuBar.draw(ColorF(0.9));
+
+		menuSelector.draw();
+
+
+		{
+			RectF exitRect(Scene::Width() - 80, 5, 60, 45);
+			exitRect.rounded(5).draw(Palette::Tomato);
+
+			closeIcon.drawAt(exitRect.center(), Palette::White);
+			
+
 		}
 
 		//RectF(82, 72, 1370, 718).rounded(UI::ScreenAreaRound).draw(Alpha(128));
