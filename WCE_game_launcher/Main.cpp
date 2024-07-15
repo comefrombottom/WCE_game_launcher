@@ -579,6 +579,116 @@ public:
 };
 
 
+class VolumeSlider {
+	double m_value = 0;
+	double min = 0;
+	double max = 1;
+	Vec2 pos{};
+	double width = 200;
+	static constexpr double height = 10;
+	static constexpr double knobRadius = 15;
+
+	bool mouseOverKnob = false;
+	Transition knobFloatTransition = Transition(0.1s, 0.1s);
+	Transition knobPressedTransition = Transition(0.1s, 0.1s);
+
+	Optional<double> dragOffset;
+
+	Optional<double> warpPos;
+
+public:
+	VolumeSlider() = default;
+	VolumeSlider(double firstValue, double min, double max, Vec2 pos, double width)
+		:m_value(firstValue), min(min), max(max), pos(pos), width(width)
+	{}
+
+	double value() const {
+		return m_value;
+	}
+
+	double value0_1() const {
+		return (m_value - min) / (max - min);
+	}
+
+	bool isDragging() const {
+		return dragOffset.has_value();
+	}
+
+	double valueTo0_1(double value) const {
+		return (value - min) / (max - min);
+	}
+
+	Circle knob() const {
+		return Circle(pos.x + width * value0_1(), pos.y, knobRadius);
+	}
+
+	double xToClampValue(double x) const {
+		double value01 = (x - pos.x) / width;
+		double v = value01 * (max - min) + min;
+		return Clamp(v, min, max);
+	}
+
+	double valueToX(double value) const {
+		return value0_1() * width + pos.x;
+	}
+
+	bool update() {
+		double prevValue = m_value;
+
+		mouseOverKnob = knob().stretched(5).mouseOver();
+
+		if (mouseOverKnob and MouseL.down()) {
+			dragOffset = Cursor::PosF().x - knob().x;
+		}
+		if (MouseL.up()) {
+			dragOffset.reset();
+		}
+
+		if (dragOffset) {
+			double knobX = Cursor::PosF().x - *dragOffset;
+			m_value = xToClampValue(knobX);
+		}
+
+
+		if (not mouseOverKnob and not dragOffset and RectF(pos.x, pos.y - height / 2, width, height).stretched(height).mouseOver()) {
+			warpPos = xToClampValue(Cursor::PosF().x);
+		}
+		else {
+			warpPos.reset();
+		}
+
+		if (warpPos and MouseL.down()) {
+			m_value = *warpPos;
+			dragOffset = 0;
+		}
+
+		knobFloatTransition.update(mouseOverKnob or dragOffset);
+		knobPressedTransition.update(bool(dragOffset));
+
+		return prevValue != m_value;
+	}
+
+	void draw(const Color& color = Palette::Hotpink) {
+		RectF(pos.x, pos.y - height / 2, width, height).rounded(height / 2).draw(ColorF(0.8));
+		RectF(pos.x, pos.y - height / 2, width * value0_1(), height).rounded(height / 2).draw(color);
+		//constexpr double buf = 5;
+		//RectF brightRect(pos.x + buf, pos.y - height * 0.4, width * value0_1() - buf * 2, height * 0.4);
+		//brightRect.rounded(brightRect.h / 2).draw(ColorF(1, 0.1));
+
+		if (warpPos) {
+			if (*warpPos < m_value) {
+				RectF(pos.x, pos.y - height / 2, width * (valueTo0_1(*warpPos)), height).rounded(height / 2).draw(ColorF(0.5, 0.2));
+			}
+			else {
+				RectF(pos.x + value0_1() * width, pos.y - height / 2, width * (valueTo0_1(*warpPos) - value0_1()), height).rounded(height / 2).draw(ColorF(0.5, 0.2));
+			}
+		}
+
+		knob().stretched(knobFloatTransition.value()).drawShadow({ 0,2 }, 5, 2, ColorF(0.7, knobFloatTransition.value() * 0.3)).draw(ColorF(1).lerp(ColorF(0.95), knobPressedTransition.value()));
+	}
+};
+
+
 class GameMenu {
 	
 	// ゲーム情報
@@ -629,6 +739,7 @@ class GameMenu {
 
 	ScrollBar scrollBar;
 
+
 public:
 	GameMenu(){
 		games = LoadGames();
@@ -671,6 +782,7 @@ public:
 		}
 
 		scrollBar = ScrollBar(RectF(Scene::Width() - 12, 5 + UI::menuBarHeight, 10, Scene::Height() - 10 - UI::menuBarHeight), Scene::Height()-UI::menuBarHeight, UI::TileSizeY * games.size() + UI::BaseTilePos.y - UI::TileSizeY / 2 + 30 - UI::menuBarHeight);
+
 	}
 
 	void update() {
@@ -1021,6 +1133,9 @@ void Main()
 
 	RectF menuBar(0, 0, Scene::Width(), UI::menuBarHeight);
 
+	Texture volumeIcon(0xf028_icon, 40);
+	VolumeSlider volumeSlider(0.5, 0, 1, Vec2(650, UI::menuBarHeight / 2), 300);
+
 	GameMenu gameMenu;
 
 
@@ -1032,6 +1147,7 @@ void Main()
 
 		menuSelector.update();
 
+		volumeSlider.update();
 
 		{
 			RectF exitRect(Scene::Width() - 80, 5, 60, 45);
@@ -1063,6 +1179,8 @@ void Main()
 
 		menuSelector.draw(FontAsset(U"Game.Desc"));
 
+		volumeIcon.drawAt(600, UI::menuBarHeight / 2, ColorF(0.6));
+		volumeSlider.draw();
 
 		{
 			RectF exitRect(Scene::Width() - 80, 5, 60, 45);
