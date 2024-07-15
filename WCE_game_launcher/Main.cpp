@@ -578,7 +578,6 @@ public:
 	}
 };
 
-
 class VolumeSlider {
 	double m_value = 0;
 	double min = 0;
@@ -688,6 +687,120 @@ public:
 	}
 };
 
+class SideGenreList {
+	struct Genre {
+		Texture icon;
+		String name;
+
+		Genre(const Texture& icon, const String& name)
+			:icon(icon)
+			, name(name)
+		{}
+
+	};
+
+	Array<Genre> genres;
+	size_t selectGenreIndex = 0;
+	size_t prevSelectGenreIndex = 0;
+
+	Vec2 offset{};
+	Vec2 oneGenreSize{};
+
+	Optional<size_t> mouseOveredIndex = 0;
+
+	double selectedLinePos = 0;
+	double selectedLineVelocity = 0;
+
+	constexpr static double selectedLineWidth = 6;
+	constexpr static double selectedLineHeightRatio = 0.5;
+
+	double timeAfterChangeIndex = 0;
+
+public:
+
+	SideGenreList() = default;
+
+	SideGenreList(const Array<Genre>& genres, const Vec2& offset, const Vec2& oneGenreSize)
+		:genres(genres)
+		, offset(offset)
+		, oneGenreSize(oneGenreSize)
+	{}
+
+	size_t index() const {
+		return selectGenreIndex;
+	}
+
+	bool update() {
+		size_t prevSelect = selectGenreIndex;
+
+		bool mouseOvered = false;
+		for (auto [i, genre] : IndexedRef(genres)) {
+			RectF rect = RectF(offset, oneGenreSize).movedBy(0, i * oneGenreSize.y);
+
+			if (rect.leftClicked()) {
+				prevSelectGenreIndex = selectGenreIndex;
+				selectGenreIndex = i;
+			}
+
+			if (rect.mouseOver()) {
+				mouseOvered = true;
+				mouseOveredIndex = i;
+			}
+		}
+
+		if (not mouseOvered) {
+			mouseOveredIndex.reset();
+		}
+
+		timeAfterChangeIndex += Scene::DeltaTime();
+		if (prevSelect != selectGenreIndex) {
+			timeAfterChangeIndex = 0;
+		}
+		selectedLinePos = Math::SmoothDamp(selectedLinePos, selectGenreIndex * 1.0, selectedLineVelocity, 0.1);
+		return prevSelect != selectGenreIndex;
+	}
+
+	void draw(const Font& font, double fontSize) const {
+		for (auto [i, genre] : Indexed(genres)) {
+			auto rect = RectF(offset, oneGenreSize).stretched(0, -2).movedBy(0, i * oneGenreSize.y).rounded(5);
+
+
+			if (selectGenreIndex == i) {
+				rect.draw(ColorF(0.5, 0.1));
+			}
+
+			if (mouseOveredIndex && *mouseOveredIndex == i) {
+				rect.draw(ColorF(0.5, 0.1));
+			}
+
+			constexpr double gap1 = 30;
+			double iconSizeX = genre.icon.width();
+			genre.icon.draw(Arg::leftCenter(offset.x + gap1, offset.y + (0.5 + i) * oneGenreSize.y), ColorF(0.4));
+
+			constexpr double gap2 = 20;
+			font(genre.name).draw(fontSize, Arg::leftCenter(offset.x + gap1 + iconSizeX + gap2, offset.y + (0.5 + i) * oneGenreSize.y), ColorF(0.4));
+
+			//Line{ 20, (i + 1) * oneGenreSize.y, oneGenreSize.x, (i + 1) * oneGenreSize.y }.movedBy(offset).draw(1, ColorF(0.7));
+		}
+
+
+		double selectedLineBegin01 = Math::Lerp<double, double, double>(prevSelectGenreIndex, selectGenreIndex, EaseInOutQuart(Min(timeAfterChangeIndex * 3, 1.0)));
+		double selectedLineEnd01 = Math::Lerp<double, double, double>(prevSelectGenreIndex, selectGenreIndex, EaseOutQuart(Min(timeAfterChangeIndex * 3, 1.0)));
+
+		if (prevSelectGenreIndex > selectGenreIndex) {
+			std::swap(selectedLineBegin01, selectedLineEnd01);
+		}
+
+		RectF(offset.x + 5, offset.y + (selectedLineBegin01 + (1 - selectedLineHeightRatio) / 2) * oneGenreSize.y, selectedLineWidth, (selectedLineEnd01 + selectedLineHeightRatio - selectedLineBegin01) * oneGenreSize.y).rounded(selectedLineWidth / 2).draw(Palette::Hotpink);
+
+		//RectF(Arg::leftCenter(offset.x + 5, offset.y+(selectedLinePos+0.5) * oneGenreSize.y), selectedLineWidth, oneGenreSize.y*0.8).rounded(selectedLineWidth/2).draw(Palette::Hotpink);
+	}
+
+	void draw(const Font& font) const {
+		draw(font, font.fontSize());
+	}
+
+};
 
 class GameMenu {
 	
@@ -1089,6 +1202,34 @@ public:
 	}
 };
 
+
+class MusicMenu {
+
+	SideGenreList sideGenreList;
+public:
+	MusicMenu() {
+		sideGenreList = SideGenreList{
+			{
+				{Texture{0Xf58f_icon,40}, U"BGM"},
+				{Texture{0Xf001_icon,40}, U"すべての曲"},
+				{Texture{0Xf009_icon,40}, U"アルバム"},
+				{Texture{0Xf0c0_icon,40}, U"作曲者"},
+
+			},
+			{20,80},
+			{400,80}
+		};
+	}
+
+	void update() {
+		sideGenreList.update();
+	}
+
+	void draw() {
+		sideGenreList.draw(FontAsset(U"GenreList"));
+	}
+};
+
 void Main()
 {
 	// フォント
@@ -1098,6 +1239,8 @@ void Main()
 	FontAsset::Register(U"Game.Play", 30, Typeface::Heavy);
 
 	FontAsset::Register(U"Game.End", 100, Typeface::Heavy);
+
+	FontAsset::Register(U"GenreList", FontMethod::MSDF, 40, Typeface::Bold);
 
 	// 再生アイコン
 	TextureAsset::Register(U"Icon.Play", 0xf144_icon, 48);
@@ -1137,6 +1280,7 @@ void Main()
 	VolumeSlider volumeSlider(0.5, 0, 1, Vec2(650, UI::menuBarHeight / 2), 300);
 
 	GameMenu gameMenu;
+	MusicMenu musicMenu;
 
 
 	Window::Resize(Scene::Size() / 2);
@@ -1169,6 +1313,10 @@ void Main()
 		case 0:
 			gameMenu.update();
 			gameMenu.draw();
+			break;
+		case 1:
+			musicMenu.update();
+			musicMenu.draw();
 			break;
 		default:
 			break;
