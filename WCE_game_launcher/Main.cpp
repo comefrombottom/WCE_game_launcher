@@ -35,7 +35,7 @@ namespace UI
 	// タイル選択の色
 	constexpr ColorF TileFrmaeColor{ 1.0, 0.7, 0.3 };
 
-	constexpr Vec2 BaseTilePos{ 1725, 180 };
+	constexpr Vec2 BaseTilePos{ 1725, 190 };
 
 	constexpr RectF InfoArea{ 180, 840, 915, 155 };
 
@@ -64,6 +64,8 @@ namespace UI
 	constexpr RectF EndArea{ 100, 100, 1720, 880 };
 
 	constexpr RectF CommentArea{ 300, 300, 1320, 480 };
+
+	constexpr double menuBarHeight = 60;
 }
 
 // ゲームの情報
@@ -668,7 +670,7 @@ public:
 			}
 		}
 
-		scrollBar = ScrollBar(RectF(Scene::Width() - 12, 5 + 60, 10, Scene::Height() - 10 - 60), Scene::Height(), UI::TileSizeY * games.size() + UI::BaseTilePos.y - UI::TileSizeY / 2 + 30);
+		scrollBar = ScrollBar(RectF(Scene::Width() - 12, 5 + UI::menuBarHeight, 10, Scene::Height() - 10 - UI::menuBarHeight), Scene::Height()-UI::menuBarHeight, UI::TileSizeY * games.size() + UI::BaseTilePos.y - UI::TileSizeY / 2 + 30 - UI::menuBarHeight);
 	}
 
 	void update() {
@@ -1017,7 +1019,7 @@ void Main()
 
 	Texture closeIcon(0xf2f5_icon, 40);
 
-	RectF menuBar(0, 0, Scene::Width(), 60);
+	RectF menuBar(0, 0, Scene::Width(), UI::menuBarHeight);
 
 	GameMenu gameMenu;
 
