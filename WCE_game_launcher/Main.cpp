@@ -570,7 +570,7 @@ public:
 			color = leftColor.lerp(rightColor, t);
 		}
 
-		RectF(Arg::center = selectedLineCenter, menuRectSize.x * 0.9, 2).rounded(1).draw(color);
+		RectF(Arg::center = selectedLineCenter, menuRectSize.x * 0.9, 4).rounded(2).draw(color);
 	}
 
 	void draw(const Font& font) const {
@@ -1203,9 +1203,22 @@ public:
 };
 
 
+
+struct Music {
+	String title;
+	String artist;
+	Audio audio;
+};
+
+
 class MusicMenu {
 
 	SideGenreList sideGenreList;
+
+	Array<Music> musics;
+
+	ScrollBar musicListScrollBar;
+	static constexpr double musicListOneHeight = 80;
 public:
 	MusicMenu() {
 		sideGenreList = SideGenreList{
@@ -1219,13 +1232,124 @@ public:
 			{20,80},
 			{400,80}
 		};
+
+		musics = Array<Music>{
+			{
+				U"曲1",
+				U"アーティスト1"
+			},
+			{
+				U"曲2",
+				U"アーティスト2"
+			},
+			{
+				U"曲3",
+				U"アーティスト3"
+			},
+			{
+				U"曲4",
+				U"アーティスト4"
+			},
+			{
+				U"曲5",
+				U"アーティスト5"
+			},
+			{
+				U"曲6",
+				U"アーティスト6"
+			},
+			{
+				U"曲7",
+				U"アーティスト7"
+			},
+			{
+				U"曲8",
+				U"アーティスト8"
+			},
+			{
+				U"曲9",
+				U"アーティスト9"
+			},
+			{
+				U"曲10",
+				U"アーティスト10"
+			},
+
+
+		};
+
+		musicListScrollBar = ScrollBar(RectF(Scene::Width()- 430 - 12, 5, 10, Scene::Height() - 500 - 5*2), Scene::Height() - 500, musics.size() * musicListOneHeight);
 	}
 
 	void update() {
 		sideGenreList.update();
+		switch (sideGenreList.index())
+		{
+		case 0:
+			break;
+		case 1:
+		{
+			Rect musicListArea(430, 500, Scene::Width() - 430, Scene::Height() - 500);
+			{
+				ScopedViewport2D viewport{ musicListArea };
+				Transformer2D cursorPosTransformer(Mat3x2::Identity(),Mat3x2::Translate(musicListArea.pos));
+				musicListScrollBar.update();
+				{
+					auto tf = musicListScrollBar.createTransformer();
+					for (auto [i, music] : Indexed(musics)) {
+
+					}
+				}
+				
+			}
+
+			
+		}
+		break;
+		default:
+			break;
+		}
 	}
 
 	void draw() {
+
+		switch (sideGenreList.index())
+		{
+		case 0:
+			break;
+		case 1:
+		{
+			Rect musicListArea(430, 500, Scene::Width() - 430, Scene::Height() - 500);
+			musicListArea.draw(ColorF(1));
+			{
+				ScopedViewport2D viewport{ musicListArea };
+				Transformer2D cursorPosTransformer(Mat3x2::Identity(), Mat3x2::Translate(musicListArea.pos));
+				{
+					auto tf = musicListScrollBar.createTransformer();
+					for (auto [i, music] : Indexed(musics)) {
+
+						FontAsset(U"Game.Desc")(music.title).draw(Arg::leftCenter(20, (i + 0.5) * musicListOneHeight), ColorF(0.3));
+						FontAsset(U"Game.Small")(music.artist).draw(Arg::leftCenter(400, (i + 0.5) * musicListOneHeight), ColorF(0.3));
+
+						Line{ 0, (i + 1) * musicListOneHeight, musicListArea.w, (i + 1) * musicListOneHeight }.draw(1, ColorF(0.7));
+					}
+				}
+				
+
+				musicListScrollBar.draw();
+			}
+
+			Rect upperArea(430, 0, Scene::Width() - 430, 500);
+			upperArea.drawShadow({}, 5, 3, ColorF(0.7, 0.3)).draw(ColorF(1));
+		}
+			break;
+		default:
+			break;
+		}
+
+		
+
+		RectF(0,0,430,Scene::Height()).drawShadow({},5,3,ColorF(0.5,0.3)).draw(ColorF(0.96,0.95,0.99));
 		sideGenreList.draw(FontAsset(U"GenreList"));
 	}
 };
@@ -1288,6 +1412,7 @@ void Main()
 
 	while (System::Update())
 	{
+		ClearPrint();
 
 		menuSelector.update();
 
