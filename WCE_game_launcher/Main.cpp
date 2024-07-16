@@ -687,6 +687,73 @@ public:
 	}
 };
 
+class SpeakerButton {
+	RectF m_rect;
+	bool mute = false;
+
+	bool mouseOvered = false;
+	Transition mouseOverTransition = Transition(0.1s, 0.1s);
+
+	bool pressed = false;
+	Transition pressedTransition = Transition(0.1s, 0.1s);
+
+	double timeAfterChange = 10;
+
+	Texture speakerTexture;
+	Texture muteTexture;
+
+public:
+	SpeakerButton(const RectF& rect) :m_rect(rect)
+	{
+		speakerTexture = Texture(0xf028_icon, rect.h * 0.75);
+		muteTexture = Texture(0xf6a9_icon, rect.h * 0.75);
+	}
+
+	bool isMute() const {
+		return mute;
+	}
+
+	bool update() {
+		bool prevMute = mute;
+		mouseOvered = m_rect.mouseOver();
+		mouseOverTransition.update(mouseOvered);
+
+		pressed = m_rect.leftPressed();
+		pressedTransition.update(pressed);
+
+		timeAfterChange += Scene::DeltaTime();
+
+		if (m_rect.leftClicked()) {
+			mute = not mute;
+			timeAfterChange = 0;
+		}
+
+		return prevMute != mute;
+	}
+
+	void draw() {
+
+		RoundRect rrect = m_rect.stretched(mouseOverTransition.value() - 1).rounded(5);
+
+		rrect.drawShadow(Vec2(0, 2), 5, 3, ColorF(0.7, mouseOverTransition.value() * 0.5));
+		rrect.draw(ColorF(1 - pressedTransition.value() * 0.05, mouseOverTransition.value()));
+
+		if (not mouseOvered) {
+			rrect.drawFrame(1, ColorF(0.7, mouseOverTransition.value()));
+		}
+
+		if (mute) {
+			muteTexture.rotated(exp(-7 * timeAfterChange) * sin(30 * timeAfterChange) * 0.5)
+				.drawAt(m_rect.center(), ColorF(0.6).lerp(Palette::Hotpink, mouseOverTransition.value()));
+		}
+		else {
+			speakerTexture.rotated(exp(-7 * timeAfterChange) * sin(30 * timeAfterChange) * 0.5)
+				.drawAt(m_rect.center(), ColorF(0.6).lerp(Palette::Hotpink, mouseOverTransition.value()));
+		}
+
+	}
+};
+
 class SideGenreList {
 	struct Genre {
 		Texture icon;
@@ -852,6 +919,7 @@ class GameMenu {
 
 	ScrollBar scrollBar;
 
+	MSRenderTexture gameListRenderer;
 
 public:
 	GameMenu(){
@@ -896,6 +964,7 @@ public:
 
 		scrollBar = ScrollBar(RectF(Scene::Width() - 12, 5 + UI::menuBarHeight, 10, Scene::Height() - 10 - UI::menuBarHeight), Scene::Height()-UI::menuBarHeight, UI::TileSizeY * games.size() + UI::BaseTilePos.y - UI::TileSizeY / 2 + 30 - UI::menuBarHeight);
 
+		gameListRenderer = MSRenderTexture(UI::TileSizeX - 20, UI::TileSizeY - 20);
 	}
 
 	void update() {
@@ -1112,18 +1181,30 @@ public:
 			const Vec2 center = UI::BaseTilePos.movedBy(0, -scrollBar.viewTop + i * UI::TileSizeY);
 			const RectF tile{ Arg::center = center, UI::TileSizeX - 20, UI::TileSizeY - 20 };
 
+			if(not tile.intersects(Scene::Rect())) continue;
+
 			// 選択されていたら、タイルの枠を描画
 			if (selectGameIndex == i)
 			{
 				tile.stretched(6)
+					.rounded(21)
 					.drawShadow(Vec2{ 0, 3 }, 8, 0)
 					.draw(UI::BackgroundColor)
 					.drawFrame(4, 0, ColorF(UI::TileFrmaeColor, 0.6 + Periodic::Sine0_1(1s) * 0.4));
 			}
 
+
 			// ゲーム画像を描画
-			tile.draw(Palette::Black);
-			g.texture.scaled(g.scale).drawAt(center);
+			{
+				ScopedRenderTarget2D rt{ gameListRenderer.clear(Palette::Black)};
+
+				g.texture.scaled(g.scale).drawAt(gameListRenderer.size() / 2);
+			}
+			Graphics2D::Flush();
+			gameListRenderer.resolve();
+
+			tile.rounded(15)(gameListRenderer).draw();
+			//g.texture.scaled(g.scale).drawAt(center);
 
 			if (tile.mouseOver())
 			{
@@ -1216,6 +1297,7 @@ class MusicMenu {
 	SideGenreList sideGenreList;
 
 	Array<Music> musics;
+
 
 	ScrollBar musicListScrollBar;
 	static constexpr double musicListOneHeight = 80;
@@ -1328,10 +1410,10 @@ public:
 					auto tf = musicListScrollBar.createTransformer();
 					for (auto [i, music] : Indexed(musics)) {
 
-						FontAsset(U"Game.Desc")(music.title).draw(Arg::leftCenter(20, (i + 0.5) * musicListOneHeight), ColorF(0.3));
+						FontAsset(U"Game.Desc")(music.title).draw(Arg::leftCenter(70, (i + 0.5) * musicListOneHeight), ColorF(0.3));
 						FontAsset(U"Game.Small")(music.artist).draw(Arg::leftCenter(400, (i + 0.5) * musicListOneHeight), ColorF(0.3));
 
-						Line{ 0, (i + 1) * musicListOneHeight, musicListArea.w, (i + 1) * musicListOneHeight }.draw(1, ColorF(0.7));
+						Line{ 50, (i + 1) * musicListOneHeight, musicListArea.w, (i + 1) * musicListOneHeight }.draw(1, ColorF(0.7));
 					}
 				}
 				
@@ -1341,6 +1423,8 @@ public:
 
 			Rect upperArea(430, 0, Scene::Width() - 430, 500);
 			upperArea.drawShadow({}, 5, 3, ColorF(0.7, 0.3)).draw(ColorF(1));
+
+			RectF(530,100,300,300).rounded(50).drawShadow({0,2}, 5, 3, ColorF(0.7, 0.3)).draw(ColorF(1));
 		}
 			break;
 		default:
@@ -1400,7 +1484,7 @@ void Main()
 
 	RectF menuBar(0, 0, Scene::Width(), UI::menuBarHeight);
 
-	Texture volumeIcon(0xf028_icon, 40);
+	SpeakerButton speakerButton(RectF(Arg::center(600, UI::menuBarHeight / 2), 50, 50));
 	VolumeSlider volumeSlider(0.5, 0, 1, Vec2(650, UI::menuBarHeight / 2), 300);
 
 	GameMenu gameMenu;
@@ -1417,6 +1501,7 @@ void Main()
 		menuSelector.update();
 
 		volumeSlider.update();
+		speakerButton.update();
 
 		{
 			RectF exitRect(Scene::Width() - 80, 5, 60, 45);
@@ -1452,7 +1537,7 @@ void Main()
 
 		menuSelector.draw(FontAsset(U"Game.Desc"));
 
-		volumeIcon.drawAt(600, UI::menuBarHeight / 2, ColorF(0.6));
+		speakerButton.draw();
 		volumeSlider.draw();
 
 		{
