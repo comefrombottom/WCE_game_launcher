@@ -380,6 +380,8 @@ bool ContA() {
 	return false;
 }
 
+class Master;
+
 struct ScrollBar
 {
 	RectF rect{};
@@ -1435,7 +1437,7 @@ class GameMenu {
 
 	bool isPlayed = false;
 
-	Audio bgm;
+	//Audio bgm;
 
 	//TextEditState com;
 
@@ -1471,6 +1473,8 @@ class GameMenu {
 
 	Buffer2D tileRoundRectBuffer = makeSmoothRoundRect(RoundRect({ 0,0 }, UI::TileSize, 25)).toBuffer2D({ 0,0 }, UI::TileSize);
 
+	bool bgmPausedWhenStartGame = false;
+
 public:
 	GameMenu(){
 		games = LoadGames();
@@ -1482,9 +1486,9 @@ public:
 
 		background = Texture(Resource(U"resource/WCE_L.jpg"));
 
-		bgm = Audio{ Resource(U"resource/bgm.mp3"), Loop::Yes };
+		//bgm = Audio{ Resource(U"resource/bgm.mp3"), Loop::Yes };
 
-		bgm.setLoopPoint(0.03s);
+		//bgm.setLoopPoint(0.03s);
 
 		//bgm.play();
 
@@ -1519,229 +1523,7 @@ public:
 		screenRenderer = BlurRenderTextureSet(UI::ScreenArea.size.asPoint());
 	}
 
-	void update() {
-		// 現在選択されているゲーム
-		const Game& game = games[selectGameIndex];
-		///////////////////////////////////////////////
-		//
-		//	ウィンドウの最小化・復帰
-		//
-		if (process)
-		{
-			// プロセスが実行中なら
-			if (process->isRunning())
-			{
-				// ウィンドウを最小化
-				Window::Minimize();
-				bgm.stop();
-				return;
-			}
-			else // プロセスが終了したら
-			{
-				// ウィンドウを復帰
-				Window::Restore();
-				//Window::Maximize();
-				Window::SetFullscreen(true);
-				process.reset();
-				bgm.play();
-			}
-		}
-
-		///////////////////////////////////////////////
-		//
-		//  タイマー時間経過後
-		//
-		/*
-		if (end) {
-			if (!commented) {
-				FontAsset(U"Game.Title")(U"よろしければコメントをお書きください").drawAt(Vec2(960, 480), Palette::Black);
-				SimpleGUI::TextBoxAt(com, Scene::Center(), 800);
-				if (SimpleGUI::Button(U"決定", Vec2(1440, 720))) {
-					writer.write(U"\n---------\n");
-					writer.write(com.text);
-					commented = true;
-				}
-			}
-			else {
-				UI::EndArea.rounded(UI::ScreenAreaRound).draw(ColorF(1.0));
-				FontAsset(U"Game.End")(U"今回はここまで！\nプレイしてくださり\nありがとうございました！\n次の人に代わってください。").drawAt(Scene::Center(), Palette::Black);
-			}
-
-
-			continue;
-		}
-		else {
-			if (timer.min() >= UI::EndMinute) end = true;
-		}
-		*/
-
-		///////////////////////////////////////////////
-		//
-		//	ゲームの起動
-		//
-		if (UI::PlayButton.leftClicked() || ContA())
-		{
-			if (!isPlayed) {
-				isPlayed = true;
-				//timer.start();
-			}
-			if (game.isWebApp || game.isHTMLApp)
-			{
-				// Web ブラウザを起動
-				process = ChildProcess{ Config::BrowserPath, game.path };
-			}
-			else if (game.isPlaceHolderEnd) {
-				//end = true;
-				System::Exit();
-			}
-			else if (game.isPlaceHolder) {
-				selectGameIndex = (selectGameIndex + 1) % games.size();
-			}
-			else
-			{
-				// 実行ファイルを起動
-				process = ChildProcess{ game.path };
-			}
-		}
-
-		if (KeyP.down()) isMove = !isMove;
-
-		///////////////////////////////////////////////
-		//
-		//	選択しているタイルの変更
-		//
-		selectGameIndex_last = selectGameIndex;
-
-		scrollBar.update();
-
-
-		{
-			auto scrollTf = scrollBar.createTransformer();
-
-			for (auto [i,game] : IndexedRef(games))
-			{
-				const Vec2 center = UI::BaseTilePos.movedBy(0, i * UI::TileIntervalY);
-				const RectF tile{ Arg::center = center, UI::TileSize };
-
-				// タイルがクリックされたら選択
-				if (tile.movedBy(game.tileMovePos).leftClicked())
-				{
-					game.mouseOverScaleVel = -1;
-					selectGameIndex = i;
-				}
-
-				
-
-				{
-					double target = 1.0;
-					Vec2 moveTarget = Vec2(0,0);
-					if (tile.movedBy(game.tileMovePos).mouseOver()) {
-						target = 1.05;
-						moveTarget = Tanh((Cursor::PosF() - center) / 100) * 8;
-					}
-					if(i == selectGameIndex) {
-						moveTarget += Vec2{-50,0};
-					}
-
-					game.mouseOverScale = Math::SmoothDamp(game.mouseOverScale, target, game.mouseOverScaleVel, 0.1);
-					game.tileMovePos = Math::SmoothDamp(game.tileMovePos, moveTarget, game.tileMovePosVel, 0.1);
-				}
-
-			}
-		}
-		
-
-		// [↑][↓] キーを押して選択の移動
-		/*
-		if (KeyUp.down())
-		{
-			//selectGameIndex = (selectGameIndex > 0) ? (selectGameIndex - 1) : 0;
-			selectGameIndex = (selectGameIndex + games.size() - 1) % games.size();
-		}
-		else if (KeyDown.down())
-		{
-			//selectGameIndex = Min(selectGameIndex + 1, games.size() - 1);
-			selectGameIndex = (selectGameIndex + 1) % games.size();
-		}*/
-
-		if (ContDown()) {
-			if (wait <= 0) {
-				//move.stop();
-				//move.play();
-				wait = 20;
-				//selectGameIndex = Min(selectGameIndex + 1, games.size() - 1);
-				selectGameIndex = (selectGameIndex + 1) % games.size();
-			}
-		}
-		else if (ContUp()) {
-			if (wait <= 0) {
-				//move.stop();
-				//move.play();
-				wait = 20;
-				//selectGameIndex = (selectGameIndex > 0) ? (selectGameIndex - 1) : 0;
-				selectGameIndex = (selectGameIndex + games.size() - 1) % games.size();
-			}
-		}
-		else wait = 0;
-		if (wait > 0)wait -= Scene::DeltaTime() * 60;
-
-		if (isMove) {
-			timer += Scene::DeltaTime();
-			if (timer > changeTime) {
-				timer -= changeTime;
-				selectGameIndex = (selectGameIndex + 1) % games.size();
-			}
-		}
-
-		if (selectGameIndex != selectGameIndex_last) {
-			double ratioS = UI::ScreenArea.w / UI::ScreenArea.h;
-			double ratio;
-			double x;
-			double y;
-			if (games[selectGameIndex].isVideo) {
-				screen_video = VideoTexture{ games[selectGameIndex].screen_file, Loop::Yes };
-				x = screen_video.size().x;
-				y = screen_video.size().y;
-			}
-			else {
-				screen_image = Texture{ games[selectGameIndex].screen_file, TextureDesc::Mipped };
-				x = screen_image.size().x;
-				y = screen_image.size().y;
-			}
-			ratio = x / y;
-			if (ratio >= ratioS) {
-				scale_screen = UI::ScreenArea.w / x;
-			}
-			else {
-				scale_screen = UI::ScreenArea.h / y;
-			}
-
-			///////////////////////////////////////////////
-			//
-			//	タイル表示のスクロール更新
-			//
-			{
-				const Vec2 center = UI::BaseTilePos.movedBy(0, -scrollBar.viewTop + selectGameIndex * UI::TileIntervalY);
-				const RectF tile{ Arg::center = center, UI::TileSize };
-
-				// 左端、右端のタイルが画面外ならスクロール
-				if (tile.y <= 0)
-				{
-					scrollBar.scrollTopTo(UI::BaseTilePos.y - UI::TileIntervalY / 2 + selectGameIndex * UI::TileIntervalY - 50);
-				}
-				else if (Scene::Height() <= tile.br().y)
-				{
-					scrollBar.scrollBottomTo(UI::BaseTilePos.y - UI::TileIntervalY / 2 + (selectGameIndex + 1) * UI::TileIntervalY + 50);
-				}
-			}
-
-		}
-
-
-		//screen
-
-		screenMosueOverTransition.update(UI::ScreenArea.mouseOver());
-	}
+	void update(Master& master);
 
 	void draw() {
 
@@ -1924,17 +1706,10 @@ enum class NextMusicMode {
 
 class MusicMenu;
 class AllMusicScene {
-	PlayButton playButton{ RectF(1000,300, 100, 100) };
-	OnlyIconButton forwardButton{ RectF(1200, 300, 100, 100), Texture{ 0xf04e_icon, 100 } };
-	OnlyIconButton backButton{ RectF(800, 300, 100, 100), Texture{ 0xf04a_icon, 100 } };
-
-	SeekBar musicBar{ RectF(Arg::center(1050, 450), 450, 20) };
-
-	IconSwitch shuffleSwitch{ RectF(120, 410, 100, 60), Texture{ 0xf074_icon, 50 } };
-
 
 	ScrollBar musicListScrollBar;
 	static constexpr double musicListOneHeight = 80;
+	static constexpr double upperAreaHeight = 70;
 
 	Optional<size_t> mouseOveredIndex;
 public:
@@ -1948,7 +1723,7 @@ public:
 
 class AlbumListScene {
 	ScrollBar albumsScrollBar;
-	RoundRect albumRoundRect = RoundRect(RectF(Arg::center(0, 0), { 400, 400 }), 50);
+	static constexpr RoundRect albumRoundRect = RoundRect(RectF(Arg::center(0, 0), { 400, 400 }), 50);
 	Polygon albumSmoothRoundRect = makeSmoothRoundRect(albumRoundRect);
 
 	struct AlubmIcon {
@@ -1970,23 +1745,56 @@ public:
 };
 
 class AlbumSelectedScene {
-	PlayButton playButton{ RectF(1000,300, 100, 100) };
-	OnlyIconButton forwardButton{ RectF(1200, 300, 100, 100), Texture{ 0xf04e_icon, 100 } };
-	OnlyIconButton backButton{ RectF(800, 300, 100, 100), Texture{ 0xf04a_icon, 100 } };
-
-	SeekBar musicBar{ RectF(Arg::center(1050, 450), 450, 20) };
-
-	IconSwitch shuffleSwitch{ RectF(120, 410, 100, 60), Texture{ 0xf074_icon, 50 } };
-
-	OnlyIconButton backToAlbumListButton{ RectF(50, 50, 50, 50), Texture{ 0xf04a_icon, 50 } };
+	OnlyIconButton backToAlbumListButton{ RectF(Arg::center(40,upperAreaHeight/2), 50, 50), Texture{0xf053_icon, 50}};
+	static constexpr RoundRect albumRoundRect = RoundRect(RectF(Arg::center(0, 0), { 400, 400 }), 50);
+	Polygon albumSmoothRoundRect = makeSmoothRoundRect(albumRoundRect);
 
 	ScrollBar musicListScrollBar;
 	static constexpr double musicListOneHeight = 80;
+	static constexpr double upperAreaHeight = 70;
+	static constexpr double albumIconAreaHeight = 500;
 
 	Optional<size_t> mouseOveredIndex;
 public:
 	AlbumSelectedScene() = default;
 	AlbumSelectedScene(MusicMenu& musicMenu);
+
+	void update(MusicMenu& musicMenu, Audio& bgm);
+
+	void draw(MusicMenu& musicMenu, const Audio& bgm);
+};
+
+class ArtistListScene {
+	ScrollBar artistListScrollBar;
+	static constexpr double artistListOneHeight = 80;
+	static constexpr double upperAreaHeight = 70;
+
+	Optional<size_t> mouseOveredIndex;
+	String mouseOveredArtistID;
+public:
+	ArtistListScene() = default;
+	ArtistListScene(MusicMenu& musicMenu);
+
+	void update(MusicMenu& musicMenu, Audio& bgm);
+
+	void draw(MusicMenu& musicMenu, const Audio& bgm);
+
+};
+
+class ArtistSelectedScene {
+	OnlyIconButton backToArtistListButton{ RectF(Arg::center(40,upperAreaHeight/2), 50, 50), Texture{0xf053_icon, 50}};
+	static constexpr RoundRect albumRoundRect = RoundRect(RectF(Arg::center(0, 0), { 400, 400 }), 50);
+	Polygon albumSmoothRoundRect = makeSmoothRoundRect(albumRoundRect);
+
+	ScrollBar musicListScrollBar;
+	static constexpr double musicListOneHeight = 80;
+	static constexpr double upperAreaHeight = 70;
+	static constexpr double artistNameAreaHeight = 150;
+
+	Optional<size_t> mouseOveredIndex;
+public:
+	ArtistSelectedScene() = default;
+	ArtistSelectedScene(MusicMenu& musicMenu);
 
 	void update(MusicMenu& musicMenu, Audio& bgm);
 
@@ -2029,10 +1837,14 @@ class MusicMenu {
 	};
 
 	Optional<String> selectedAlbumID;
+	Optional<String> selectedArtistID;
 
 	AllMusicScene allMusicScene;
 	AlbumListScene albumListScene;
 	AlbumSelectedScene albumSelectedScene;
+	ArtistListScene artistListScene;
+	ArtistSelectedScene artistSelectedScene;
+
 
 public:
 	MusicMenu(Audio& bgm)
@@ -2064,48 +1876,10 @@ public:
 			}
 		}
 
-		//musics = Array<Music>{
-		//	{
-		//		U"曲1",
-		//		U"アーティスト1"
-		//	},
-		//	{
-		//		U"曲2",
-		//		U"アーティスト2"
-		//	},
-		//	{
-		//		U"曲3",
-		//		U"アーティスト3"
-		//	},
-		//	{
-		//		U"曲4",
-		//		U"アーティスト4"
-		//	},
-		//	{
-		//		U"曲5",
-		//		U"アーティスト5"
-		//	},
-		//	{
-		//		U"曲6",
-		//		U"アーティスト6"
-		//	},
-		//	{
-		//		U"曲7",
-		//		U"アーティスト7"
-		//	},
-		//	{
-		//		U"曲8",
-		//		U"アーティスト8"
-		//	},
-		//	{
-		//		U"曲9",
-		//		U"アーティスト9"
-		//	},
-		//	{
-		//		U"曲10",
-		//		U"アーティスト10"
-		//	},
-		//};
+		//アーティストに曲を紐づける
+		for (auto [id, music] : json[U"musicTable"]) {
+			json[U"artistTable"][music[U"artist"].getString()][U"musics"].push_back(id);
+		}
 
 
 		if(musics_size > 0) {
@@ -2118,6 +1892,8 @@ public:
 		allMusicScene = AllMusicScene(*this);
 		albumListScene = AlbumListScene(*this);
 		albumSelectedScene = AlbumSelectedScene(*this);
+		artistListScene = ArtistListScene(*this);
+		artistSelectedScene = ArtistSelectedScene(*this);
 
 
 
@@ -2182,6 +1958,16 @@ public:
 			}
 		}
 		break;
+		case MusicMenuState::Composer:
+		{
+			if (selectedArtistID) {
+				artistSelectedScene.update(*this, bgm);
+			}
+			else {
+				artistListScene.update(*this, bgm);
+			}
+		}
+		break;
 		default:
 			break;
 		}
@@ -2207,6 +1993,16 @@ public:
 			}
 		}
 			break;
+		case MusicMenuState::Composer:
+		{
+			if (selectedArtistID) {
+				artistSelectedScene.draw(*this, bgm);
+			}
+			else {
+				artistListScene.draw(*this, bgm);
+			}
+		}
+			break;
 		default:
 			break;
 		}
@@ -2219,45 +2015,450 @@ public:
 	friend class AllMusicScene;
 	friend class AlbumListScene;
 	friend class AlbumSelectedScene;
+	friend class MusicControlPanel;
+	friend class ArtistListScene;
+	friend class ArtistSelectedScene;
 };
 
+class MusicControlPanel {
+	bool m_open = false;
+	double m_openTransition = 0;
+	double m_openTransitionVel = 0;
+
+	Vec2 m_pos{};
+
+	static constexpr Vec2 sizeWhenClose = { 600,50 };
+	static constexpr Vec2 sizeWhenOpen = { 700,500 };
+
+	bool m_mouseOvered = false;
+	double m_mouseOverTransition = 0;
+	double m_mouseOverTransitionVel = 0;
+
+
+
+	PlayButton playButton{ RectF(Arg::center(0,350), 100, 100)};
+	OnlyIconButton forwardButton{ RectF(Arg::center(150,350), 100, 100), Texture{ 0xf04e_icon, 100 } };
+	OnlyIconButton backButton{ RectF(Arg::center(-150,350), 100, 100), Texture{ 0xf04a_icon, 100 } };
+
+	SeekBar seekBar{ RectF(Arg::center(0, 450), 400, 20) };
+
+	IconSwitch shuffleSwitch{ RectF(220, 210, 100, 60), Texture{ 0xf074_icon, 50 } };
+
+public:
+	MusicControlPanel() = default;
+	MusicControlPanel(const Vec2& pos) : m_pos(pos) {}
+
+	bool mouseOvered() const {
+		return m_mouseOvered;
+	}
+
+	void update(Master& master);
+
+	void draw(const Master& master);
+
+};
+
+class Master {
+public:
+	MenuSelector menuSelector{
+		{
+			{Texture{0Xf11b_icon,40}, U"ゲーム", Palette::Royalblue},
+			{Texture{0Xf001_icon,40}, U"音楽", Palette::Hotpink},
+			{Texture{0Xf53f_icon,40}, U"イラスト", Palette::Limegreen}
+		}
+	};
+
+	RectF menuBar{ 0, 0, Scene::Width(), UI::menuBarHeight };
+
+	SpeakerButton speakerButton{ RectF(Arg::center(600, UI::menuBarHeight / 2), 50, 50), true };
+
+	VolumeSlider volumeSlider{ 0.5, 0, 1, Vec2(650, UI::menuBarHeight / 2), 300 };
+
+	MusicControlPanel musicControlPanel{ Vec2{1000,5} };
+
+	Audio bgm;
+
+	GameMenu gameMenu;
+	MusicMenu musicMenu{ bgm };
+
+	BlurMSRenderTextureSet wholeSceneRenderTexture{ Scene::Size() };
+
+	Stopwatch exitTimer;
+
+	IconButton exitButton{ RectF(Scene::Width() - 80, UI::menuBarHeight / 2 - 45.0 / 2, 60, 45),Texture(0xf2f5_icon, 40) };
+
+	ExitWindow exitWindow{ Scene::CenterF() };
+
+public:
+	Master() {
+		GlobalAudio::SetVolume(speakerButton.isMute() ? 0 : volumeSlider.value());
+	}
+
+	void update() {
+		if (not exitTimer.isStarted()) {
+
+			menuSelector.update();
+
+			if (volumeSlider.update()) {
+				GlobalAudio::SetVolume(speakerButton.isMute() ? 0 : volumeSlider.value());
+			}
+			if (speakerButton.update()) {
+				GlobalAudio::SetVolume(speakerButton.isMute() ? 0 : volumeSlider.value());
+			}
+
+			musicControlPanel.update(*this);
+
+			if (musicControlPanel.mouseOvered()) {
+				return;
+			}
+
+			if (exitButton.update()) {
+				exitTimer.restart();
+			}
+
+
+			if (menuBar.leftClicked()) {
+				MouseL.clearInput();
+			}
+
+
+			{
+				{
+					Transformer2D t(Mat3x2::Translate(0, UI::menuBarHeight), TransformCursor::Yes);
+					switch (menuSelector.getSelectMenuIndex())
+					{
+					case 0:
+						gameMenu.update(*this);
+						break;
+					case 1:
+						musicMenu.update(bgm);
+						break;
+					default:
+						break;
+					}
+				}
+
+			}
+		}
+		else {
+			exitWindow.update();
+
+			if (exitWindow.yesClicked()) {
+				System::Exit();
+			}
+			else if (exitWindow.noClicked()) {
+				exitTimer.reset();
+			}
+
+			if (MouseL.down()) {
+				exitTimer.reset();
+			}
+
+		}
+	}
+
+	void draw() {
+		if (not exitTimer.isStarted()) {
+
+			{
+				ScopedRenderTarget2D target{ wholeSceneRenderTexture.from.clear(UI::BackgroundColor) };
+
+
+				{
+					Transformer2D t(Mat3x2::Translate(0, UI::menuBarHeight), TransformCursor::Yes);
+					switch (menuSelector.getSelectMenuIndex())
+					{
+					case 0:
+						gameMenu.draw();
+						break;
+					case 1:
+						musicMenu.draw(bgm);
+						break;
+					default:
+					{
+						FontAsset(U"GenreList")(U"Commig soon...").drawAt(50, Scene::Center(), Palette::Black);
+					}
+						break;
+					}
+				}
+
+				menuBar.drawShadow(Vec2(0, 3), 8);
+				menuBar.draw(ColorF(0.9));
+
+				menuSelector.draw(FontAsset(U"Game.Desc"));
+
+				musicControlPanel.draw(*this);
+				speakerButton.draw();
+				volumeSlider.draw();
+
+
+				exitButton.draw(Palette::Salmon, Palette::White);
+			}
+			Graphics2D::Flush();
+			wholeSceneRenderTexture.from.resolve();
+			wholeSceneRenderTexture.from.draw();
+		}
+		else {
+			double t = exitTimer.sF() * 10;
+			double blurStrength = (t < 1 ? EaseOutQuad(t) : 1) * 16;
+
+			wholeSceneRenderTexture.blur(blurStrength);
+			wholeSceneRenderTexture.to.draw();
+
+			Scene::Rect().draw(ColorF(0, Min(exitTimer.sF(), 0.2)));
+
+			exitWindow.draw();
+		}
+	}
+};
+
+void GameMenu::update(Master& master)
+{
+	// 現在選択されているゲーム
+	const Game& game = games[selectGameIndex];
+	///////////////////////////////////////////////
+	//
+	//	ウィンドウの最小化・復帰
+	//
+	if (process)
+	{
+		// プロセスが実行中なら
+		if (process->isRunning())
+		{
+			// ウィンドウを最小化
+			Window::Minimize();
+
+			if (master.bgm.isPlaying()) {
+				master.bgm.pause();
+				bgmPausedWhenStartGame = true;
+			}
+			return;
+		}
+		else // プロセスが終了したら
+		{
+			// ウィンドウを復帰
+			Window::Restore();
+			//Window::Maximize();
+			Window::SetFullscreen(true);
+			process.reset();
+
+			if (bgmPausedWhenStartGame) {
+				master.bgm.play();
+			}
+		}
+	}
+
+	///////////////////////////////////////////////
+	//
+	//  タイマー時間経過後
+	//
+	/*
+	if (end) {
+		if (!commented) {
+			FontAsset(U"Game.Title")(U"よろしければコメントをお書きください").drawAt(Vec2(960, 480), Palette::Black);
+			SimpleGUI::TextBoxAt(com, Scene::Center(), 800);
+			if (SimpleGUI::Button(U"決定", Vec2(1440, 720))) {
+				writer.write(U"\n---------\n");
+				writer.write(com.text);
+				commented = true;
+			}
+		}
+		else {
+			UI::EndArea.rounded(UI::ScreenAreaRound).draw(ColorF(1.0));
+			FontAsset(U"Game.End")(U"今回はここまで！\nプレイしてくださり\nありがとうございました！\n次の人に代わってください。").drawAt(Scene::Center(), Palette::Black);
+		}
+
+
+		continue;
+	}
+	else {
+		if (timer.min() >= UI::EndMinute) end = true;
+	}
+	*/
+
+	///////////////////////////////////////////////
+	//
+	//	ゲームの起動
+	//
+	if (UI::PlayButton.leftClicked() || ContA())
+	{
+		if (!isPlayed) {
+			isPlayed = true;
+			//timer.start();
+		}
+		if (game.isWebApp || game.isHTMLApp)
+		{
+			// Web ブラウザを起動
+			process = ChildProcess{ Config::BrowserPath, game.path };
+		}
+		else if (game.isPlaceHolderEnd) {
+			//end = true;
+			System::Exit();
+		}
+		else if (game.isPlaceHolder) {
+			selectGameIndex = (selectGameIndex + 1) % games.size();
+		}
+		else
+		{
+			// 実行ファイルを起動
+			process = ChildProcess{ game.path };
+		}
+	}
+
+	if (KeyP.down()) isMove = !isMove;
+
+	///////////////////////////////////////////////
+	//
+	//	選択しているタイルの変更
+	//
+	selectGameIndex_last = selectGameIndex;
+
+	scrollBar.update();
+
+
+	{
+		auto scrollTf = scrollBar.createTransformer();
+
+		for (auto [i, game] : IndexedRef(games))
+		{
+			const Vec2 center = UI::BaseTilePos.movedBy(0, i * UI::TileIntervalY);
+			const RectF tile{ Arg::center = center, UI::TileSize };
+
+			// タイルがクリックされたら選択
+			if (tile.movedBy(game.tileMovePos).leftClicked())
+			{
+				game.mouseOverScaleVel = -1;
+				selectGameIndex = i;
+			}
+
+
+
+			{
+				double target = 1.0;
+				Vec2 moveTarget = Vec2(0, 0);
+				if (tile.movedBy(game.tileMovePos).mouseOver()) {
+					target = 1.05;
+					moveTarget = Tanh((Cursor::PosF() - center) / 100) * 8;
+				}
+				if (i == selectGameIndex) {
+					moveTarget += Vec2{ -50,0 };
+				}
+
+				game.mouseOverScale = Math::SmoothDamp(game.mouseOverScale, target, game.mouseOverScaleVel, 0.1);
+				game.tileMovePos = Math::SmoothDamp(game.tileMovePos, moveTarget, game.tileMovePosVel, 0.1);
+			}
+
+		}
+	}
+
+
+	// [↑][↓] キーを押して選択の移動
+	/*
+	if (KeyUp.down())
+	{
+		//selectGameIndex = (selectGameIndex > 0) ? (selectGameIndex - 1) : 0;
+		selectGameIndex = (selectGameIndex + games.size() - 1) % games.size();
+	}
+	else if (KeyDown.down())
+	{
+		//selectGameIndex = Min(selectGameIndex + 1, games.size() - 1);
+		selectGameIndex = (selectGameIndex + 1) % games.size();
+	}*/
+
+	if (ContDown()) {
+		if (wait <= 0) {
+			//move.stop();
+			//move.play();
+			wait = 20;
+			//selectGameIndex = Min(selectGameIndex + 1, games.size() - 1);
+			selectGameIndex = (selectGameIndex + 1) % games.size();
+		}
+	}
+	else if (ContUp()) {
+		if (wait <= 0) {
+			//move.stop();
+			//move.play();
+			wait = 20;
+			//selectGameIndex = (selectGameIndex > 0) ? (selectGameIndex - 1) : 0;
+			selectGameIndex = (selectGameIndex + games.size() - 1) % games.size();
+		}
+	}
+	else wait = 0;
+	if (wait > 0)wait -= Scene::DeltaTime() * 60;
+
+	if (isMove) {
+		timer += Scene::DeltaTime();
+		if (timer > changeTime) {
+			timer -= changeTime;
+			selectGameIndex = (selectGameIndex + 1) % games.size();
+		}
+	}
+
+	if (selectGameIndex != selectGameIndex_last) {
+		double ratioS = UI::ScreenArea.w / UI::ScreenArea.h;
+		double ratio;
+		double x;
+		double y;
+		if (games[selectGameIndex].isVideo) {
+			screen_video = VideoTexture{ games[selectGameIndex].screen_file, Loop::Yes };
+			x = screen_video.size().x;
+			y = screen_video.size().y;
+		}
+		else {
+			screen_image = Texture{ games[selectGameIndex].screen_file, TextureDesc::Mipped };
+			x = screen_image.size().x;
+			y = screen_image.size().y;
+		}
+		ratio = x / y;
+		if (ratio >= ratioS) {
+			scale_screen = UI::ScreenArea.w / x;
+		}
+		else {
+			scale_screen = UI::ScreenArea.h / y;
+		}
+
+		///////////////////////////////////////////////
+		//
+		//	タイル表示のスクロール更新
+		//
+		{
+			const Vec2 center = UI::BaseTilePos.movedBy(0, -scrollBar.viewTop + selectGameIndex * UI::TileIntervalY);
+			const RectF tile{ Arg::center = center, UI::TileSize };
+
+			// 左端、右端のタイルが画面外ならスクロール
+			if (tile.y <= 0)
+			{
+				scrollBar.scrollTopTo(UI::BaseTilePos.y - UI::TileIntervalY / 2 + selectGameIndex * UI::TileIntervalY - 50);
+			}
+			else if (Scene::Height() <= tile.br().y)
+			{
+				scrollBar.scrollBottomTo(UI::BaseTilePos.y - UI::TileIntervalY / 2 + (selectGameIndex + 1) * UI::TileIntervalY + 50);
+			}
+		}
+
+	}
+
+
+	//screen
+
+	screenMosueOverTransition.update(UI::ScreenArea.mouseOver());
+}
 
 AllMusicScene::AllMusicScene(MusicMenu& musicMenu){
-	musicListScrollBar = ScrollBar(RectF(Scene::Width() - 430 - 12, 5, 10, Scene::Height() - UI::menuBarHeight - 500 - 5 * 2), Scene::Height() - UI::menuBarHeight - 500, musicMenu.json[U"allMusic"].size() * musicListOneHeight);
+	musicListScrollBar = ScrollBar(RectF(Scene::Width() - 430 - 12, 5, 10, Scene::Height() - UI::menuBarHeight - upperAreaHeight - 5 * 2), Scene::Height() - UI::menuBarHeight - upperAreaHeight, musicMenu.json[U"allMusic"].size() * musicListOneHeight);
 }
 
 void AllMusicScene::update(MusicMenu& musicMenu, Audio& bgm) {
 	Transformer2D genleTf(Mat3x2::Translate(430, 0), TransformCursor::Yes);
 
-	if (musicMenu.m_nowPlayingMusic) {
-		playButton.update(bgm);
 
-		if (forwardButton.update()) {
-			musicMenu.goForwardMusic(bgm);
-		}
-		if (backButton.update()) {
-			bgm.seekSamples(0);
-		}
-
-		musicBar.update(bgm);
-
-		if (shuffleSwitch.update()) {
-			if (shuffleSwitch.isOn()) {
-				musicMenu.m_nextMusicMode = NextMusicMode::random;
-			}
-			else {
-				musicMenu.m_nextMusicMode = NextMusicMode::next;
-			}
-		}
-	}
-
-	Rect upperArea(0, 0, Scene::Width() - 430, 500);
+	Rect upperArea(0, 0, Scene::Width() - 430, upperAreaHeight);
 
 	if (upperArea.leftClicked()) {
 		MouseL.clearInput();
 	}
 
-	Rect musicListArea(0, 500, Scene::Width() - 430, Scene::Height() - 500);
+	Rect musicListArea(00, upperAreaHeight, Scene::Width() - 430, Scene::Height() - upperAreaHeight - UI::menuBarHeight);
 
 	{
 		Transformer2D cursorPosTransformer(Mat3x2::Translate(musicListArea.pos), TransformCursor::Yes);
@@ -2293,7 +2494,7 @@ void AllMusicScene::update(MusicMenu& musicMenu, Audio& bgm) {
 void AllMusicScene::draw(MusicMenu& musicMenu, const Audio& bgm) {
 	Transformer2D genleTf(Mat3x2::Translate(430, 0), TransformCursor::Yes);
 
-	Rect musicListArea(0, 500, Scene::Width() - 430, Scene::Height() - 500);
+	Rect musicListArea(0, upperAreaHeight, Scene::Width() - 430, Scene::Height() - upperAreaHeight - UI::menuBarHeight);
 	musicListArea.draw(ColorF(1));
 	{
 		Transformer2D cursorPosTransformer(Mat3x2::Translate(musicListArea.pos), TransformCursor::Yes);
@@ -2324,51 +2525,14 @@ void AllMusicScene::draw(MusicMenu& musicMenu, const Audio& bgm) {
 		musicListScrollBar.draw();
 	}
 
-	Rect upperArea(0, 0, Scene::Width() - 430, 500);
+	Rect upperArea(0, 0, Scene::Width() - 430, upperAreaHeight);
+	upperArea.drawShadow({}, 5, 5, ColorF(0.7, 0.3));
+	upperArea.draw(ColorF(0.96, 0.95, 0.99));
 
-	if (musicMenu.m_nowPlayingMusic) {
-		Texture* texture = nullptr;
-		const auto& music = musicMenu.json[U"musicTable"][musicMenu.m_nowPlayingMusic->id];
-		if (music.hasElement(U"albums") and music[U"albums"].size() > 0) {
-			texture = &musicMenu.albumImages[music[U"albums"][0].getString()];
-		}
-
-
-		upperArea.drawShadow({}, 5, 3, ColorF(0.7, 0.3)).draw(ColorF(1));
-
-		auto musicHugeIcon = RectF(130, 40, 300, 300).rounded(50);
-
-		musicHugeIcon.drawShadow({ 0,2 }, 5, 3, ColorF(0.7, 0.3));
-		if (texture) {
-			musicHugeIcon(*texture).draw();
-		}
-		else
-		{
-			musicHugeIcon.draw(ColorF(1));
-		}
-
-		FontAsset(U"GenreList")(music[U"title"].getString()).draw(50, Arg::leftCenter(500, 100), ColorF(0.2));
-		FontAsset(U"Regular")(music[U"artist"].getString()).draw(30, Arg::leftCenter(500, 160), ColorF(0.2));
-
-
-		playButton.draw(ColorF(0.2, 0.5));
-		forwardButton.draw(ColorF(0.2, 0.5));
-		backButton.draw(ColorF(0.2, 0.5));
-		musicBar.draw(ColorF(0.5, 0.5), ColorF(0.2, 0.5));
-		double seconds = musicBar.value() * bgm.lengthSec();
-		String time_tex = U"{:0>2}:{:0>2}"_fmt((int)seconds / 60, (int)seconds % 60);
-		FontAsset(U"Regular")(time_tex).draw(30, Arg::rightCenter(1050 - 250, 450), ColorF(0.2));
-		double seconds_all = bgm.lengthSec();
-		String time_tex_all = U"{:0>2}:{:0>2}"_fmt((int)seconds_all / 60, (int)seconds_all % 60);
-		FontAsset(U"Regular")(time_tex_all).draw(30, Arg::leftCenter(1050 + 250, 450), ColorF(0.2));
-
-		shuffleSwitch.draw();
-
-	}
 }
 
 AlbumListScene::AlbumListScene(MusicMenu& musicMenu){
-	albumsScrollBar = ScrollBar(RectF(Scene::Width() - 430 - 12, 5, 10, Scene::Height() - UI::menuBarHeight - 5 * 2), Scene::Height() - UI::menuBarHeight, 2000);
+	albumsScrollBar = ScrollBar(RectF(Scene::Width() - 430 - 12, 5, 10, Scene::Height() - UI::menuBarHeight - 5 * 2), Scene::Height() - UI::menuBarHeight, 1000);
 
 	albumIcons.clear();
 	for (auto [id, album] : musicMenu.json[U"albumTable"]) {
@@ -2443,36 +2607,15 @@ void AlbumListScene::draw(MusicMenu& musicMenu, const Audio& bgm) {
 
 AlbumSelectedScene::AlbumSelectedScene(MusicMenu& musicMenu)
 {
-	musicListScrollBar = ScrollBar(RectF(Scene::Width() - 430 - 12, 5, 10, Scene::Height() - UI::menuBarHeight - 500 - 5 * 2), Scene::Height() - UI::menuBarHeight - 500, musicMenu.json[U"allMusic"].size() * musicListOneHeight);
+	musicListScrollBar = ScrollBar(RectF(Scene::Width() - 430 - 12, 5, 10, Scene::Height() - UI::menuBarHeight - upperAreaHeight - 5 * 2), Scene::Height() - UI::menuBarHeight - upperAreaHeight, musicMenu.json[U"allMusic"].size() * musicListOneHeight + albumIconAreaHeight);
 }
 
 void AlbumSelectedScene::update(MusicMenu& musicMenu, Audio& bgm)
 {
 	Transformer2D genleTf(Mat3x2::Translate(430, 0), TransformCursor::Yes);
 
-	if (musicMenu.m_nowPlayingMusic) {
-		playButton.update(bgm);
 
-		if (forwardButton.update()) {
-			musicMenu.goForwardMusic(bgm);
-		}
-		if (backButton.update()) {
-			bgm.seekSamples(0);
-		}
-
-		musicBar.update(bgm);
-
-		if (shuffleSwitch.update()) {
-			if (shuffleSwitch.isOn()) {
-				musicMenu.m_nextMusicMode = NextMusicMode::random;
-			}
-			else {
-				musicMenu.m_nextMusicMode = NextMusicMode::next;
-			}
-		}
-	}
-
-	Rect upperArea(0, 0, Scene::Width() - 430, 500);
+	Rect upperArea(0, 0, Scene::Width() - 430, upperAreaHeight);
 
 	if (upperArea.leftClicked()) {
 		MouseL.clearInput();
@@ -2483,17 +2626,18 @@ void AlbumSelectedScene::update(MusicMenu& musicMenu, Audio& bgm)
 		return;
 	}
 
-	Rect musicListArea(0, 500, Scene::Width() - 430, Scene::Height() - 500);
+	Rect musicListArea(0, upperAreaHeight, Scene::Width() - 430, Scene::Height() - upperAreaHeight - UI::menuBarHeight);
 
 	{
 		Transformer2D cursorPosTransformer(Mat3x2::Translate(musicListArea.pos), TransformCursor::Yes);
-		musicListScrollBar.pageHeight = musicMenu.json[U"albumTable"][*musicMenu.selectedAlbumID][U"musics"].size() * musicListOneHeight;
+		musicListScrollBar.pageHeight = musicMenu.json[U"albumTable"][*musicMenu.selectedAlbumID][U"musics"].size() * musicListOneHeight + albumIconAreaHeight;
 		musicListScrollBar.update();
 		if (musicListScrollBar.dragOffset) {
 			MouseL.clearInput();
 		}
 		{
 			auto tf = musicListScrollBar.createTransformer();
+			Transformer2D downForAlbumIcon{ Mat3x2::Translate(0, albumIconAreaHeight) ,TransformCursor::Yes };
 
 			mouseOveredIndex.reset();
 			for (auto i : step(musicMenu.json[U"albumTable"][*musicMenu.selectedAlbumID][U"musics"].size())) {
@@ -2520,12 +2664,28 @@ void AlbumSelectedScene::draw(MusicMenu& musicMenu, const Audio& bgm)
 {
 	Transformer2D genleTf(Mat3x2::Translate(430, 0), TransformCursor::Yes);
 
-	Rect musicListArea(0, 500, Scene::Width() - 430, Scene::Height() - 500);
+	Rect musicListArea(0, upperAreaHeight, Scene::Width() - 430, Scene::Height() - upperAreaHeight - UI::menuBarHeight);
 	musicListArea.draw(ColorF(1));
 	{
 		Transformer2D cursorPosTransformer(Mat3x2::Translate(musicListArea.pos), TransformCursor::Yes);
 		{
 			auto tf = musicListScrollBar.createTransformer();
+
+
+			//album image icon
+			{
+				auto album = musicMenu.json[U"albumTable"][*musicMenu.selectedAlbumID];
+				const Texture& texture = musicMenu.albumImages[*musicMenu.selectedAlbumID];
+				{
+					Transformer2D albumTf(Mat3x2::Translate(250, 250), TransformCursor::Yes);
+					albumRoundRect.drawShadow({ 0, 3 }, 5, 5, ColorF(0.7, 0.3));
+					albumSmoothRoundRect.toBuffer2D(Arg::center(0, 0), texture.size() * (albumRoundRect.rect.size / texture.size()).maxComponent()).draw(texture);
+				}
+				
+				FontAsset(U"GenreList")(album[U"title"].getString()).draw(60, Arg::leftCenter(500, 250), ColorF(0.3));
+			}
+
+			Transformer2D downForAlbumIcon{ Mat3x2::Translate(0, albumIconAreaHeight) ,TransformCursor::Yes};
 
 			auto musics = musicMenu.json[U"albumTable"][*musicMenu.selectedAlbumID][U"musics"];
 
@@ -2553,22 +2713,252 @@ void AlbumSelectedScene::draw(MusicMenu& musicMenu, const Audio& bgm)
 		musicListScrollBar.draw();
 	}
 
-	Rect upperArea(0, 0, Scene::Width() - 430, 500);
+	Rect upperArea(0, 0, Scene::Width() - 430, upperAreaHeight);
 
-	
+	upperArea.drawShadow({}, 5, 5, ColorF(0.7, 0.3));
+	upperArea.draw(ColorF(0.96, 0.95, 0.99));
 
-	if (musicMenu.m_nowPlayingMusic) {
-		Texture* texture = nullptr;
-		const auto& music = musicMenu.json[U"musicTable"][musicMenu.m_nowPlayingMusic->id];
-		if (music.hasElement(U"albums") and music[U"albums"].size() > 0) {
-			texture = &musicMenu.albumImages[music[U"albums"][0].getString()];
+	backToAlbumListButton.draw(Palette::Hotpink);
+}
+
+ArtistListScene::ArtistListScene(MusicMenu& musicMenu) {
+	artistListScrollBar = ScrollBar(RectF(Scene::Width() - 430 - 12, 5, 10, Scene::Height() - UI::menuBarHeight - upperAreaHeight - 5 * 2), Scene::Height() - UI::menuBarHeight - upperAreaHeight, musicMenu.json[U"artistTable"].size() * artistListOneHeight);
+}
+
+void ArtistListScene::update(MusicMenu& musicMenu, Audio& bgm) {
+	Transformer2D genleTf(Mat3x2::Translate(430, 0), TransformCursor::Yes);
+	Rect musicListArea(0, upperAreaHeight, Scene::Width() - 430, Scene::Height() - upperAreaHeight - UI::menuBarHeight);
+
+	artistListScrollBar.update();
+	{
+		Transformer2D cursorPosTransformer(Mat3x2::Translate(musicListArea.pos), TransformCursor::Yes);
+
+		auto tf = artistListScrollBar.createTransformer();
+
+		
+		mouseOveredIndex.reset();
+		mouseOveredArtistID.clear();
+		size_t i = 0;
+		for (auto [artistID, artist] : musicMenu.json[U"artistTable"]) {
+			if (RectF(0, i * artistListOneHeight, Scene::Width() - 430, artistListOneHeight).mouseOver()) {
+				mouseOveredIndex = i;
+				mouseOveredArtistID = artistID;
+			}
+
+			i++;
+		}
+		if (mouseOveredArtistID and MouseL.down()) {
+			musicMenu.selectedArtistID = mouseOveredArtistID;
+		}
+	}
+}
+
+void ArtistListScene::draw(MusicMenu& musicMenu, const Audio& bgm) {
+	Transformer2D genleTf(Mat3x2::Translate(430, 0), TransformCursor::Yes);
+
+	Rect musicListArea(0, upperAreaHeight, Scene::Width() - 430, Scene::Height() - upperAreaHeight - UI::menuBarHeight);
+	musicListArea.draw(ColorF(1));
+	{
+		Transformer2D cursorPosTransformer(Mat3x2::Translate(musicListArea.pos), TransformCursor::Yes);
+		{
+			auto tf = artistListScrollBar.createTransformer();
+
+			size_t i = 0;
+			for (auto [artistID, artist] : musicMenu.json[U"artistTable"]) {
+				
+				if (mouseOveredIndex and *mouseOveredIndex == i) {
+					RectF(40, i * artistListOneHeight, musicListArea.w, artistListOneHeight).rounded(10).draw(ColorF(0.7, 0.5));
+				}
+
+
+				FontAsset(U"Game.Desc")(artistID).draw(Arg::leftCenter(70, (i + 0.5) * artistListOneHeight), ColorF(0.3));
+				Line{ 50, (i + 1) * artistListOneHeight, musicListArea.w, (i + 1) * artistListOneHeight }.draw(1, ColorF(0.7));
+				i++;
+			}
+		}
+	}
+	artistListScrollBar.draw();
+
+	Rect upperArea(0, 0, Scene::Width() - 430, upperAreaHeight);
+
+	upperArea.drawShadow({}, 5, 5, ColorF(0.7, 0.3));
+	upperArea.draw(ColorF(0.96, 0.95, 0.99));
+}
+
+ArtistSelectedScene::ArtistSelectedScene(MusicMenu& musicMenu) {
+	musicListScrollBar = ScrollBar(RectF(Scene::Width() - 430 - 12, 5, 10, Scene::Height() - UI::menuBarHeight - upperAreaHeight - 5 * 2), Scene::Height() - UI::menuBarHeight - upperAreaHeight, musicMenu.json[U"artistTable"].size() * musicListOneHeight);
+}
+
+void ArtistSelectedScene::update(MusicMenu& musicMenu, Audio& bgm) {
+	Transformer2D genleTf(Mat3x2::Translate(430, 0), TransformCursor::Yes);
+
+
+	Rect upperArea(0, 0, Scene::Width() - 430, upperAreaHeight);
+
+	if (upperArea.leftClicked()) {
+		MouseL.clearInput();
+	}
+
+	if (backToArtistListButton.update()) {
+		musicMenu.selectedArtistID.reset();
+		return;
+	}
+
+	Rect musicListArea(0, upperAreaHeight, Scene::Width() - 430, Scene::Height() - upperAreaHeight - UI::menuBarHeight);
+
+	{
+		Transformer2D cursorPosTransformer(Mat3x2::Translate(musicListArea.pos), TransformCursor::Yes);
+		musicListScrollBar.pageHeight = musicMenu.json[U"artistTable"][*musicMenu.selectedArtistID][U"musics"].size() * musicListOneHeight + artistNameAreaHeight;
+		musicListScrollBar.update();
+		if (musicListScrollBar.dragOffset) {
+			MouseL.clearInput();
+		}
+		{
+			auto tf = musicListScrollBar.createTransformer();
+
+			Transformer2D downForArtistName{ Mat3x2::Translate(0, artistNameAreaHeight) ,TransformCursor::Yes };
+
+			mouseOveredIndex.reset();
+			for (auto i : step(musicMenu.json[U"artistTable"][*musicMenu.selectedArtistID][U"musics"].size())) {
+				if (RectF(0, i * musicListOneHeight, musicListArea.w, musicListOneHeight).mouseOver()) {
+					mouseOveredIndex = i;
+				}
+			}
+
+			if (mouseOveredIndex and MouseL.down()) {
+				String id = musicMenu.json[U"artistTable"][*musicMenu.selectedArtistID][U"musics"][*mouseOveredIndex].getString();
+				if (musicMenu.m_nowPlayingMusic and musicMenu.m_nowPlayingMusic->id != id) {
+					bgm = Audio{ Audio::Stream, U"musics/" + musicMenu.json[U"musicTable"][id][U"path"].getString() };
+					bgm.play();
+					musicMenu.m_nowPlayingMusic.reset();
+					musicMenu.m_nowPlayingMusic = MusicMenu::NowPlayingMusic{ id,musicMenu.json[U"artistTable"][*musicMenu.selectedArtistID][U"musics"],*mouseOveredIndex };
+				}
+			}
+		}
+
+	}
+
+}
+
+void ArtistSelectedScene::draw(MusicMenu& musicMenu, const Audio& bgm) {
+	Transformer2D genleTf(Mat3x2::Translate(430, 0), TransformCursor::Yes);
+
+	Rect musicListArea(0, upperAreaHeight, Scene::Width() - 430, Scene::Height() - upperAreaHeight - UI::menuBarHeight);
+	musicListArea.draw(ColorF(1));
+	{
+		Transformer2D cursorPosTransformer(Mat3x2::Translate(musicListArea.pos), TransformCursor::Yes);
+		{
+			auto tf = musicListScrollBar.createTransformer();
+
+			//artist name
+			{
+				FontAsset(U"GenreList")(*musicMenu.selectedArtistID).draw(60, Arg::leftCenter(100, 70), ColorF(0.3));
+			}
+
+			Transformer2D downForArtistName{ Mat3x2::Translate(0, artistNameAreaHeight) ,TransformCursor::Yes };
+
+			size_t i = 0;
+
+			for (auto item : musicMenu.json[U"artistTable"][*musicMenu.selectedArtistID][U"musics"]) {
+				String id = item.value.getString();
+				auto music = musicMenu.json[U"musicTable"][id];
+				if (mouseOveredIndex and *mouseOveredIndex == i) {
+					RectF(40, i * musicListOneHeight, musicListArea.w, musicListOneHeight).rounded(10).draw(ColorF(0.7, 0.5));
+				}
+
+				if (musicMenu.m_nowPlayingMusic and musicMenu.m_nowPlayingMusic->id == id) {
+					Circle(30, i * musicListOneHeight + musicListOneHeight / 2, 5).draw(Palette::Hotpink);
+				}
+
+				FontAsset(U"Game.Desc")(music[U"title"].getString()).draw(Arg::leftCenter(70, (i + 0.5) * musicListOneHeight), ColorF(0.3));
+
+				Line{ 50, (i + 1) * musicListOneHeight, musicListArea.w, (i + 1) * musicListOneHeight }.draw(1, ColorF(0.7));
+				i++;
+			}
 		}
 
 
+		musicListScrollBar.draw();
+	}
 
-		upperArea.drawShadow({}, 5, 3, ColorF(0.7, 0.3)).draw(ColorF(1));
+	Rect upperArea(0, 0, Scene::Width() - 430, upperAreaHeight);
 
-		auto musicHugeIcon = RectF(130, 40, 300, 300).rounded(50);
+	upperArea.drawShadow({}, 5, 5, ColorF(0.7, 0.3));
+	upperArea.draw(ColorF(0.96, 0.95, 0.99));
+
+	backToArtistListButton.draw(Palette::Hotpink);
+}
+
+void MusicControlPanel::update(Master& master)
+{
+	auto roundRectWhenClose = RoundRect(RectF{ m_pos,sizeWhenClose }, sizeWhenClose.y / 5);
+	auto roundRectWhenOpen = RoundRect(RectF{ Arg::topCenter = roundRectWhenClose.rect.topCenter(),sizeWhenOpen }, sizeWhenOpen.y / 5);
+
+	auto roundRect = roundRectWhenClose.lerp(roundRectWhenOpen, m_openTransition);
+
+	m_mouseOvered = roundRect.mouseOver();
+	m_mouseOverTransition = Math::SmoothDamp(m_mouseOverTransition, m_mouseOvered ? 1.0 : 0.0, m_mouseOverTransitionVel, 0.1);
+
+	m_open = m_mouseOvered;
+	m_openTransition = Math::SmoothDamp(m_openTransition, m_open ? 1.0 : 0.0, m_openTransitionVel, 0.1);
+
+	if (not master.musicMenu.m_nowPlayingMusic) return;
+
+	if (m_open) {
+		Transformer2D tf(Mat3x2::Translate(roundRectWhenOpen.topCenter()), TransformCursor::Yes);
+
+		playButton.update(master.bgm);
+
+		if (forwardButton.update()) {
+			master.musicMenu.goForwardMusic(master.bgm);
+		}
+		if (backButton.update()) {
+			master.bgm.seekSamples(0);
+		}
+
+		seekBar.update(master.bgm);
+
+		if (shuffleSwitch.update()) {
+			if (shuffleSwitch.isOn()) {
+				master.musicMenu.m_nextMusicMode = NextMusicMode::random;
+			}
+			else {
+				master.musicMenu.m_nextMusicMode = NextMusicMode::next;
+			}
+		}
+	}
+	else {
+
+	}
+}
+
+void MusicControlPanel::draw(const Master& master)
+{
+
+	auto roundRectWhenClose = RoundRect(RectF{ m_pos,sizeWhenClose }, sizeWhenClose.y / 5);
+	auto roundRectWhenOpen = RoundRect(RectF{ Arg::topCenter = roundRectWhenClose.rect.topCenter(),sizeWhenOpen }, sizeWhenOpen.y / 5);
+
+	auto roundRect = roundRectWhenClose.lerp(roundRectWhenOpen, m_mouseOverTransition);
+
+
+	roundRect.drawShadow({0,5}, 10, 10, ColorF(0, 0.1));
+	makeSmoothRoundRect(roundRect).draw(ColorF(1));
+
+	constexpr RoundRect musicHugeIconWhenClose = RectF(-280, 5, 40, 40).rounded(40.0 / 5);
+	constexpr RoundRect musicHugeIconWhenOpen = RectF(-320, 40, 130, 130).rounded(20);
+
+	if (not master.musicMenu.m_nowPlayingMusic) return;
+
+	const Texture* texture = nullptr;
+	const auto& music = master.musicMenu.json[U"musicTable"][master.musicMenu.m_nowPlayingMusic->id];
+	if (music.hasElement(U"albums") and music[U"albums"].size() > 0) {
+		texture = &master.musicMenu.albumImages.at(music[U"albums"][0].getString());
+	}
+
+	if (m_open) {
+		Transformer2D tf(Mat3x2::Translate(roundRectWhenOpen.topCenter()), TransformCursor::Yes);
+
+		auto musicHugeIcon = musicHugeIconWhenClose.lerp(musicHugeIconWhenOpen, m_openTransition);
 
 		musicHugeIcon.drawShadow({ 0,2 }, 5, 3, ColorF(0.7, 0.3));
 		if (texture) {
@@ -2579,27 +2969,62 @@ void AlbumSelectedScene::draw(MusicMenu& musicMenu, const Audio& bgm)
 			musicHugeIcon.draw(ColorF(1));
 		}
 
-		FontAsset(U"GenreList")(music[U"title"].getString()).draw(50, Arg::leftCenter(500, 100), ColorF(0.2));
-		FontAsset(U"Regular")(music[U"artist"].getString()).draw(30, Arg::leftCenter(500, 160), ColorF(0.2));
+		FontAsset(U"GenreList")(music[U"title"].getString()).draw(Math::Lerp(25, 30, m_openTransition), Arg::leftCenter(Vec2{ -230, 17 }.lerp(Vec2{ -170, 70 },m_openTransition)), ColorF(0.2));
+		FontAsset(U"Regular")(music[U"artist"].getString()).draw(Math::Lerp(15, 20, m_openTransition), Arg::leftCenter(Vec2{ -230, 40 }.lerp(Vec2{ -170, 120 }, m_openTransition)), ColorF(0.2));
+
+		//FontAsset(U"GenreList")(music[U"title"].getString()).draw(30, Arg::leftCenter(-170, 70), ColorF(0.2));
+		//FontAsset(U"Regular")(music[U"artist"].getString()).draw(20, Arg::leftCenter(-170, 120), ColorF(0.2));
+
+		Transformer2D tf2(Mat3x2::Translate(- Vec2(0, 300) * (1 - m_mouseOverTransition)), TransformCursor::Yes);
+
+		ScopedColorMul2D colorMul(ColorF(1, m_openTransition));
 
 
 		playButton.draw(ColorF(0.2, 0.5));
 		forwardButton.draw(ColorF(0.2, 0.5));
 		backButton.draw(ColorF(0.2, 0.5));
-		musicBar.draw(ColorF(0.5, 0.5), ColorF(0.2, 0.5));
-		double seconds = musicBar.value() * bgm.lengthSec();
+		seekBar.draw(ColorF(0.5, 0.5), ColorF(0.2, 0.5));
+		double seconds = seekBar.value() * master.bgm.lengthSec();
 		String time_tex = U"{:0>2}:{:0>2}"_fmt((int)seconds / 60, (int)seconds % 60);
-		FontAsset(U"Regular")(time_tex).draw(30, Arg::rightCenter(1050 - 250, 450), ColorF(0.2));
-		double seconds_all = bgm.lengthSec();
+		FontAsset(U"Regular")(time_tex).draw(30, Arg::rightCenter(0 - 220, 450), ColorF(0.2));
+		double seconds_all = master.bgm.lengthSec();
 		String time_tex_all = U"{:0>2}:{:0>2}"_fmt((int)seconds_all / 60, (int)seconds_all % 60);
-		FontAsset(U"Regular")(time_tex_all).draw(30, Arg::leftCenter(1050 + 250, 450), ColorF(0.2));
+		FontAsset(U"Regular")(time_tex_all).draw(30, Arg::leftCenter(0 + 220, 450), ColorF(0.2));
 
 		shuffleSwitch.draw();
 
+
+	}
+	else {
+		Transformer2D tf(Mat3x2::Translate(roundRectWhenClose.topCenter()), TransformCursor::Yes);
+
+		auto musicHugeIcon = musicHugeIconWhenClose.lerp(musicHugeIconWhenOpen, m_openTransition);
+
+		musicHugeIcon.drawShadow({ 0,2 }, 5, 3, ColorF(0.7, 0.3));
+		if (texture) {
+			musicHugeIcon(*texture).draw();
+		}
+		else
+		{
+			musicHugeIcon.draw(ColorF(1));
+		}
+
+		FontAsset(U"GenreList")(music[U"title"].getString()).draw(Math::Lerp(25, 30, m_openTransition), Arg::leftCenter(Vec2{ -230, 17 }.lerp(Vec2{ -170, 70 }, m_openTransition)), ColorF(0.2));
+		FontAsset(U"Regular")(music[U"artist"].getString()).draw(Math::Lerp(15, 20, m_openTransition), Arg::leftCenter(Vec2{ -230, 40 }.lerp(Vec2{ -170, 120 }, m_openTransition)), ColorF(0.2));
+
+
+		//FontAsset(U"GenreList")(music[U"title"].getString()).draw(25, Arg::leftCenter(-230, 17), ColorF(0.2));
+		//FontAsset(U"Regular")(music[U"artist"].getString()).draw(15, Arg::leftCenter(-230, 40), ColorF(0.2));
+
+		ScopedColorMul2D colorMul(ColorF(1, 1 - m_openTransition));
+
+
 	}
 
-	backToAlbumListButton.draw(ColorF(0.2, 0.5));
+	
 }
+
+
 
 
 void Main()
@@ -2634,125 +3059,18 @@ void Main()
 	//Escキーを押しても終了しないようにする
 	System::SetTerminationTriggers(UserAction::CloseButtonClicked);
 
-	
-	MenuSelector menuSelector{
-		{
-			{Texture{0Xf11b_icon,40}, U"ゲーム", Palette::Royalblue},
-			{Texture{0Xf001_icon,40}, U"音楽", Palette::Hotpink},
-			{Texture{0Xf53f_icon,40}, U"イラスト", Palette::Limegreen}
-		}
-	};
-
-	RectF menuBar(0, 0, Scene::Width(), UI::menuBarHeight);
-
-	SpeakerButton speakerButton(RectF(Arg::center(600, UI::menuBarHeight / 2), 50, 50), true);
-	
-	VolumeSlider volumeSlider(0.5, 0, 1, Vec2(650, UI::menuBarHeight / 2), 300);
-
-	Audio bgm;
-
-	GameMenu gameMenu;
-	MusicMenu musicMenu(bgm);
-
-	GlobalAudio::SetVolume(speakerButton.isMute() ? 0 : volumeSlider.value());
+	Master master;
 
 	Window::Resize(Scene::Size() / 2);
 	//Window::SetFullscreen(true);
 
-	BlurMSRenderTextureSet wholeSceneRenderTexture(Scene::Size());
-
-	Stopwatch exitTimer;
-
-	IconButton exitButton{ RectF(Scene::Width() - 80, UI::menuBarHeight/2-45.0/2, 60, 45),Texture(0xf2f5_icon, 40) };
-
-	ExitWindow exitWindow{Scene::CenterF()};
 
 	while (System::Update())
 	{
 		ClearPrint();
 		
-		if (not exitTimer.isStarted()) {
-
-			menuSelector.update();
-
-			if (volumeSlider.update()) {
-				GlobalAudio::SetVolume(speakerButton.isMute() ? 0 : volumeSlider.value());
-			}
-			if (speakerButton.update()) {
-				GlobalAudio::SetVolume(speakerButton.isMute() ? 0 : volumeSlider.value());
-			}
-
-			if (exitButton.update()) {
-				exitTimer.restart();
-			}
-
-
-			if (menuBar.leftClicked()) {
-				MouseL.clearInput();
-			}
-
-
-			{
-				ScopedRenderTarget2D target{ wholeSceneRenderTexture.from.clear(UI::BackgroundColor) };
-
-
-				{
-					Transformer2D t(Mat3x2::Translate(0, UI::menuBarHeight), TransformCursor::Yes);
-					switch (menuSelector.getSelectMenuIndex())
-					{
-					case 0:
-						gameMenu.update();
-						gameMenu.draw();
-						break;
-					case 1:
-						musicMenu.update(bgm);
-						musicMenu.draw(bgm);
-						break;
-					default:
-						break;
-					}
-				}
-
-				menuBar.drawShadow(Vec2(0, 3), 8);
-				menuBar.draw(ColorF(0.9));
-
-				menuSelector.draw(FontAsset(U"Game.Desc"));
-
-				speakerButton.draw();
-				volumeSlider.draw();
-
-				exitButton.draw(Palette::Salmon,Palette::White);
-			}
-			Graphics2D::Flush();
-			wholeSceneRenderTexture.from.resolve();
-			wholeSceneRenderTexture.from.draw();
-		}
-		else {
-			double t = exitTimer.sF() * 10;
-			double blurStrength = (t < 1 ? EaseOutQuad(t) : 1) * 16;
-
-			wholeSceneRenderTexture.blur(blurStrength);
-			wholeSceneRenderTexture.to.draw();
-
-			Scene::Rect().draw(ColorF(0, Min(exitTimer.sF(),0.2)));
-
-			exitWindow.update();
-
-			if (exitWindow.yesClicked()) {
-				System::Exit();
-			}
-			else if (exitWindow.noClicked()) {
-				exitTimer.reset();
-			}
-
-			if (MouseL.down()) {
-				exitTimer.reset();
-			}
-
-			exitWindow.draw();
-		}
-
-		
+		master.update();
+		master.draw();
 
 		//RectF(82, 72, 1370, 718).rounded(UI::ScreenAreaRound).draw(Alpha(128));
 	}
