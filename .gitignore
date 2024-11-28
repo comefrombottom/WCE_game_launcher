@@ -361,3 +361,5 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/WCE_game_launcher/App/musics/M3_2024_original
+/WCE_game_launcher/App/musics/M3_2024_cover
