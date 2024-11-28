@@ -1,0 +1,192 @@
+{
+  "musicTable": {
+    "旅路の到達点": {
+      "title": "旅路の到達点",
+      "artist": "八日水素",
+      "path": "M3_2024_cover/01 八日水素_旅路の到達点_Celeste_Reach for the Summit.wav"
+    },
+    "ゼルダの子守歌 Remixed by Bomo": {
+      "title": "ゼルダの子守歌 Remixed by Bomo",
+      "artist": "Bomo",
+      "path": "M3_2024_cover/02 Bomo_ゼルダの子守歌 Remixed by Bomo_ゼルダの伝説_ゼルダの子守歌.wav"
+    },
+    "Beat and Bass": {
+      "title": "Beat and Bass",
+      "artist": "Tanso",
+      "path": "M3_2024_cover/03 Tanso_Beat and Bass_東方輝針城_始原のビート ～ Pristine Beat.wav"
+    },
+    "羽根ペンを手に": {
+      "title": "羽根ペンを手に",
+      "artist": "八日水素",
+      "path": "M3_2024_cover/04 八日水素_羽根ペンを手に_ib_記憶.wav"
+    },
+    "とある少女のうたた寝": {
+      "title": "とある少女のうたた寝",
+      "artist": "八日水素",
+      "path": "M3_2024_cover/05 八日水素_とある少女のうたた寝_アンリアルライフ_アンリアルマーチ.wav"
+    },
+    "ワインの溢れるドリンクバー": {
+      "title": "ワインの溢れるドリンクバー",
+      "artist": "八日水素",
+      "path": "M3_2024_cover/06 八日水素_ワインの溢れるドリンクバー_ファミレスを享受せよ_過去を照らす月_月に座るひとりふたり.wav"
+    },
+    "Light of Magus": {
+      "title": "Light of Magus",
+      "artist": "Träne",
+      "path": "M3_2024_cover/07 Trane_Light of Magus_妖精大戦争東方三月精_メイガスナイト.wav"
+    },
+    "ブチコロ力": {
+      "title": "ブチコロ力",
+      "artist": "Budbox",
+      "path": "M3_2024_cover/08 Budbox_ブチコロ力_テトリス_Коробушка.wav"
+    },
+    "積み木の片付け": {
+      "title": "積み木の片付け",
+      "artist": "Budbox",
+      "path": "M3_2024_cover/09 Budbox_積み木の片付け_Portal_Still Alive.wav"
+    },
+    "始まりは終わりとともに": {
+      "title": "始まりは終わりとともに",
+      "artist": "八日水素",
+      "path": "M3_2024_cover/10 八日水素_始まりは終わりとともに_SANABI_Ending Means Starting Again.wav"
+    },
+
+    "Fractal_Lab": {
+      "title": "Fractal_Lab",
+      "artist": "Iria",
+      "path": "M3_2024_original/01 Iria_Fractal_Lab.wav"
+    },
+    "Secret-Investigation": {
+      "title": "Secret-Investigation",
+      "artist": "noob",
+      "path": "M3_2024_original/02 noob_Secret-Investigation.wav"
+    },
+    "Unter dem Mond": {
+      "title": "Unter dem Mond",
+      "artist": "noob",
+      "path": "M3_2024_original/03 noob_Unter dem Mond.wav"
+    },
+    "雪歩き": {
+      "title": "雪歩き",
+      "artist": "Bomo",
+      "path": "M3_2024_original/04 Bomo_雪歩き.wav"
+    },
+    "mmm": {
+      "title": "mmm",
+      "artist": "Bomo",
+      "path": "M3_2024_original/05 Bomo_mmm.wav"
+    },
+    "Scorcher": {
+      "title": "Scorcher",
+      "artist": "Träne",
+      "path": "M3_2024_original/06 Trane_Scorcher.wav"
+    },
+    "Soundtrack1": {
+      "title": "Soundtrack1",
+      "artist": "絵空事加奈",
+      "path": "M3_2024_original/07 絵空事加奈_Soundtrack1.wav"
+    },
+    "unknown": {
+      "title": "unknown",
+      "artist": "人間",
+      "path": "M3_2024_original/08 人間_unknown.wav"
+    },
+    "風が吹いて": {
+      "title": "風が吹いて",
+      "artist": "Bomo",
+      "path": "M3_2024_original/09 Bomo_風が吹いて.wav"
+    },
+    "それとも": {
+      "title": "それとも",
+      "artist": "だんごむし",
+      "path": "M3_2024_original/10 だんごむし_それとも.wav"
+    },
+    "20のエピローグ": {
+      "title": "20のエピローグ",
+      "artist": "Budbox",
+      "path": "M3_2024_original/11 Budbox_20のエピローグ.wav"
+    },
+    " 水 流 ": {
+      "title": " 水 流 ",
+      "artist": "Tanso",
+      "path": "M3_2024_original/12 Tanso_ 水 流 .wav"
+    }
+
+  },
+
+  "allMusic": [
+    "旅路の到達点",
+    "ゼルダの子守歌 Remixed by Bomo",
+    "Beat and Bass",
+    "羽根ペンを手に",
+    "とある少女のうたた寝",
+    "ワインの溢れるドリンクバー",
+    "Light of Magus",
+    "ブチコロ力",
+    "積み木の片付け",
+    "始まりは終わりとともに",
+
+    "Fractal_Lab",
+    "Secret-Investigation",
+    "Unter dem Mond",
+    "雪歩き",
+    "mmm",
+    "Scorcher",
+    "Soundtrack1",
+    "unknown",
+    "風が吹いて",
+    "それとも",
+    "20のエピローグ",
+    " 水 流 "
+  ],
+
+  "albumTable": {
+    "bgm": {
+      "title": "BGM",
+      "imagePath": "AlbumsImage/BGM_jaket.png",
+      "musics": [
+      ]
+    },
+    "m3_2024_cover": {
+      "title": "COSMIX",
+      "imagePath": "AlbumsImage/m3_2024_cover.png",
+      "musics": [
+        "旅路の到達点",
+        "ゼルダの子守歌 Remixed by Bomo",
+        "Beat and Bass",
+        "羽根ペンを手に",
+        "とある少女のうたた寝",
+        "ワインの溢れるドリンクバー",
+        "Light of Magus",
+        "ブチコロ力",
+        "積み木の片付け",
+        "始まりは終わりとともに"
+      ]
+    },
+    "m3_2024_original": {
+      "title": "CHAOSMOS",
+      "imagePath": "AlbumsImage/m3_2024_original.png",
+      "musics": [
+        "Fractal_Lab",
+        "Secret-Investigation",
+        "Unter dem Mond",
+        "雪歩き",
+        "mmm",
+        "Scorcher",
+        "Soundtrack1",
+        "unknown",
+        "風が吹いて",
+        "それとも",
+        "20のエピローグ",
+        " 水 流 "
+      ]
+    }
+  },
+
+  "allAlbum": [
+    "bgm",
+    "m3_2024_cover",
+    "m3_2024_original"
+  ]
+}
+
