@@ -141,12 +141,6 @@
   ],
 
   "albumTable": {
-    "bgm": {
-      "title": "BGM",
-      "imagePath": "AlbumsImage/BGM_jaket.png",
-      "musics": [
-      ]
-    },
     "m3_2024_cover": {
       "title": "COSMIX",
       "imagePath": "AlbumsImage/m3_2024_cover.png",
@@ -184,7 +178,6 @@
   },
 
   "allAlbum": [
-    "bgm",
     "m3_2024_cover",
     "m3_2024_original"
   ]

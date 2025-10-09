@@ -21,13 +21,13 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -115,7 +115,22 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AlbumListScene.cpp" />
+    <ClCompile Include="AlbumSelectedScene.cpp" />
+    <ClCompile Include="AllIllustrationScene.cpp" />
+    <ClCompile Include="AllMusicScene.cpp" />
+    <ClCompile Include="ArtistListScene.cpp" />
+    <ClCompile Include="ArtistSelectedScene.cpp" />
+    <ClCompile Include="AuthorListScene.cpp" />
+    <ClCompile Include="AuthorSelectedScene.cpp" />
+    <ClCompile Include="Class.cpp" />
+    <ClCompile Include="GameMenu.cpp" />
+    <ClCompile Include="IllustrationMenu.cpp" />
+    <ClCompile Include="IllustViewer.cpp" />
     <ClCompile Include="Main.cpp" />
+    <ClCompile Include="Master.cpp" />
+    <ClCompile Include="MusicControlPanel.cpp" />
+    <ClCompile Include="MusicMenu.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
@@ -325,7 +340,26 @@
     <Xml Include="App\example\xml\test.xml" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AlbumListScene.h" />
+    <ClInclude Include="AlbumSelectedScene.h" />
+    <ClInclude Include="AllIllustrationScene.h" />
+    <ClInclude Include="AllMusicScene.h" />
+    <ClInclude Include="ArtistListScene.h" />
+    <ClInclude Include="ArtistSelectedScene.h" />
+    <ClInclude Include="AuthorListScene.h" />
+    <ClInclude Include="AuthorSelectedScene.h" />
+    <ClInclude Include="Class.h" />
+    <ClInclude Include="Common.h" />
+    <ClInclude Include="GameMenu.h" />
+    <ClInclude Include="IllustrationMenu.h" />
+    <ClInclude Include="IllustViewer.h" />
+    <ClInclude Include="Master.h" />
+    <ClInclude Include="MusicControlPanel.h" />
+    <ClInclude Include="MusicMenu.h" />
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="UI.h" />
+    <ClInclude Include="WavyDamp.h" />
+    <ClInclude Include="SingleUseCursorPos.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App\example\obj\blacksmith.obj">
