@@ -77,7 +77,7 @@ void AlbumSelectedScene::draw(MusicMenu& musicMenu, const Audio& bgm)
 					makeSmoothShape(albumRoundRect).toBuffer2D(Arg::center(0, 0), texture.size() * (albumRoundRect.rect.size / texture.size()).maxComponent()).draw(texture);
 				}
 
-				FontAsset(U"GenreList")(album[U"title"].getString()).draw(60, Arg::leftCenter(500, 250), ColorF(0.3));
+				FontAsset(U"Bold")(album[U"title"].getString()).draw(60, Arg::leftCenter(500, 250), ColorF(0.3));
 			}
 
 			Transformer2D downForAlbumIcon{ Mat3x2::Translate(0, albumIconAreaHeight) ,TransformCursor::Yes };

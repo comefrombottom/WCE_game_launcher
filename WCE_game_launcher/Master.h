@@ -139,7 +139,7 @@ public:
 						break;
 					default:
 					{
-						FontAsset(U"GenreList")(U"Commig soon...").drawAt(50, Scene::Center(), Palette::Black);
+						FontAsset(U"Bold")(U"Commig soon...").drawAt(50, Scene::Center(), Palette::Black);
 					}
 					break;
 					}

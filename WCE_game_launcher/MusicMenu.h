@@ -222,7 +222,7 @@ public:
 		}
 
 		RectF(0, 0, 430, Scene::Height() - UI::menuBarHeight).drawShadow({}, 5, 3, ColorF(0.5, 0.3)).draw(ColorF(0.96, 0.95, 0.99));
-		sideGenreList.draw(FontAsset(U"GenreList"), Palette::Hotpink);
+		sideGenreList.draw(FontAsset(U"Bold"), Palette::Hotpink);
 	}
 
 	friend class AllMusicScene;

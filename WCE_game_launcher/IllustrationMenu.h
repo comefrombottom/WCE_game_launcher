@@ -44,7 +44,9 @@ public:
 
 		// 作者にイラストを紐づける
 		for (auto [id, illustration] : json[U"illustTable"]) {
-			json[U"authorTable"][illustration[U"author"].getString()][U"illusts"].push_back(id);
+			if (auto author = illustration[U"author"].getOpt<String>()) {
+				json[U"authorTable"][author.value()][U"illusts"].push_back(id);
+			}
 		}
 
 		allIllustrationScene = AllIllustrationScene(*this);
@@ -100,7 +102,7 @@ public:
 		}
 
 		RectF(0, 0, 430, Scene::Height() - UI::menuBarHeight).drawShadow({}, 5, 3, ColorF(0.5, 0.3)).draw(ColorF(0.96, 0.99, 0.95));
-		sideGenreList.draw(FontAsset(U"GenreList"), Palette::Limegreen);
+		sideGenreList.draw(FontAsset(U"Bold"), Palette::Limegreen);
 
 		if (illustViewerOpen) {
 			illustViewer.draw(*this);

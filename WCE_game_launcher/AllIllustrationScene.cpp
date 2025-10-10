@@ -12,7 +12,7 @@ AllIllustrationScene::AllIllustrationScene(IllustrationMenu& illustrationMenu)
 	allID.shuffle();
 
 	constexpr double paddingX = 50.0;
-	constexpr double paddingY = 50.0;
+	constexpr double paddingY = 80.0;
 
 	Array<double> bottomYs(columns);
 
@@ -32,9 +32,27 @@ AllIllustrationScene::AllIllustrationScene(IllustrationMenu& illustrationMenu)
 		double height = texture.height() * scale;
 		const size_t col = getMinColmn();
 		const double x = paddingX + col * (oneWidth + paddingX);
-		const double y = bottomYs[col] + paddingY;
+		double y = bottomYs[col] + paddingY;
+
 		positionedIllusts.push_back(PositionedIllust{ id, Vec2{ x + oneWidth / 2,y + height / 2 }, scale ,scaleWhenMouseOver });
-		bottomYs[col] += paddingY + height;
+
+		auto illustJSON = illustrationMenu.json[U"illustTable"][id];
+
+		y += height;
+
+		String title = illustJSON[U"title"].getOr<String>(U"");
+		if (title) {
+			y += 30 + 15;
+		}
+
+		String authorName = illustJSON[U"author"].getOr<String>(U"");
+		if (authorName) {
+			y += 30 + 5;
+		}
+
+		// y += paddingY;
+
+		bottomYs[col] = y;
 	}
 
 	double maxBottomY = *std::max_element(bottomYs.begin(), bottomYs.end());
@@ -86,12 +104,37 @@ void AllIllustrationScene::draw(IllustrationMenu& illustrationMenu)
 		for (const auto& illust : positionedIllusts) {
 			Texture& texture = illustrationMenu.illustrationImages[illust.id];
 			RectF rect{ Arg::center = illust.center, texture.size() * illust.scale };
+			double realScale = Math::Lerp(illust.scale, illust.scaleWhenMouseOver, illust.mouseOverTransition);
+			RectF scaledRect{ Arg::center = illust.center, texture.size() * realScale };
 			if (viewRect.intersects(rect)) {
-				RectF sr = texture.scaled(Math::Lerp(illust.scale, illust.scaleWhenMouseOver, illust.mouseOverTransition)).drawAt(illust.center);
+				RectF sr = texture.scaled(realScale).drawAt(illust.center);
 				if (illust.pressed) {
 					sr.draw(ColorF(0, 0.2));
 				}
 			}
+
+			auto illustJSON = illustrationMenu.json[U"illustTable"][illust.id];
+
+			String title = illustJSON[U"title"].getOr<String>(U"");
+			double y = scaledRect.bottomY() + 15;
+			if (title) {
+				const auto& font = FontAsset(U"Bold");
+				RectF titleRect = font(title).draw(30, Arg::topLeft(scaledRect.x, y), Palette::Black);
+				PrintDebug(titleRect.h);
+				y += titleRect.h + 5;
+			}
+
+			String authorName = illustJSON[U"author"].getOr<String>(U"");
+			if (authorName) {
+				const auto& font = FontAsset(U"Regular");
+				const auto& usericon = TextureAsset(U"Icon.user");
+
+				RectF usericonRect = usericon.resized(30).draw(Arg::topLeft(scaledRect.x, y), ColorF(0.3));
+				font(authorName).draw(30, Arg::leftCenter(usericonRect.rightCenter() + Vec2{10, 0}), Palette::Dimgray);
+
+
+			}
+			
 		}
 	}
 	scrollBar.draw();

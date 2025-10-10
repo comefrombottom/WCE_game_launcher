@@ -12,14 +12,16 @@ void Main()
 
 	FontAsset::Register(U"Game.End", 100, Typeface::Heavy);
 
-	FontAsset::Register(U"GenreList", FontMethod::MSDF, 40, Typeface::Bold);
 	FontAsset::Register(U"Regular", FontMethod::MSDF, 40, Typeface::Regular);
+	FontAsset::Register(U"Bold", FontMethod::MSDF, 40, Typeface::Bold);
 
 	// 再生アイコン
 	TextureAsset::Register(U"Icon.Play", 0xf144_icon, 48);
 
 	//end icon
 	TextureAsset::Register(U"Icon.End", 0xf2f5_icon, 48);
+
+	TextureAsset::Register(U"Icon.user", 0xf007_icon, 48);
 	
 	// ウィンドウと背景色
 	Window::SetTitle(U"WCE GAMES 2025");

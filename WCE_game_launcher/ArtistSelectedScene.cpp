@@ -67,7 +67,7 @@ void ArtistSelectedScene::draw(MusicMenu& musicMenu, const Audio& bgm) {
 
 			//artist name
 			{
-				FontAsset(U"GenreList")(*musicMenu.selectedArtistID).draw(60, Arg::leftCenter(100, 70), ColorF(0.3));
+				FontAsset(U"Bold")(*musicMenu.selectedArtistID).draw(60, Arg::leftCenter(100, 70), ColorF(0.3));
 			}
 
 			Transformer2D downForArtistName{ Mat3x2::Translate(0, artistNameAreaHeight) ,TransformCursor::Yes };

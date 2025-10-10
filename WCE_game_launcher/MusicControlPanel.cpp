@@ -11,7 +11,7 @@ void MusicControlPanel::update(SingleUseCursorPos& cursorPos, Master& master)
 
 	auto roundRect = m_open ? roundRectWhenOpen : roundRectWhenClose;
 
-	m_mouseOvered = cursorPos and roundRect.stretched(5).mouseOver() or seekBar.isDragging();
+	m_mouseOvered = cursorPos and roundRect.rect.stretched(5).mouseOver() or seekBar.isDragging();
 
 	m_open = m_mouseOvered;
 	m_openTransition = Math::SmoothDamp(m_openTransition, m_open ? 1.0 : 0.0, m_openTransitionVel, 0.1);
@@ -90,10 +90,10 @@ void MusicControlPanel::draw(const Master& master)
 				musicHugeIcon.draw(ColorF(1));
 			}
 
-			FontAsset(U"GenreList")(music[U"title"].getString()).draw(Math::Lerp(25, 30, m_openTransition), Arg::leftCenter(Vec2{ -230, 17 }.lerp(Vec2{ -170, 70 }, m_openTransition)), ColorF(0.2));
+			FontAsset(U"Bold")(music[U"title"].getString()).draw(Math::Lerp(25, 30, m_openTransition), Arg::leftCenter(Vec2{ -230, 17 }.lerp(Vec2{ -170, 70 }, m_openTransition)), ColorF(0.2));
 			FontAsset(U"Regular")(music[U"artist"].getString()).draw(Math::Lerp(15, 20, m_openTransition), Arg::leftCenter(Vec2{ -230, 40 }.lerp(Vec2{ -170, 120 }, m_openTransition)), ColorF(0.2));
 
-			//FontAsset(U"GenreList")(music[U"title"].getString()).draw(30, Arg::leftCenter(-170, 70), ColorF(0.2));
+			//FontAsset(U"Bold")(music[U"title"].getString()).draw(30, Arg::leftCenter(-170, 70), ColorF(0.2));
 			//FontAsset(U"Regular")(music[U"artist"].getString()).draw(20, Arg::leftCenter(-170, 120), ColorF(0.2));
 
 			Transformer2D tf2(Mat3x2::Translate(-Vec2(0, 300) * (1 - m_openTransition)), TransformCursor::Yes);
@@ -131,11 +131,11 @@ void MusicControlPanel::draw(const Master& master)
 				musicHugeIcon.draw(ColorF(1));
 			}
 
-			FontAsset(U"GenreList")(music[U"title"].getString()).draw(Math::Lerp(25, 30, m_openTransition), Arg::leftCenter(Vec2{ -230, 17 }.lerp(Vec2{ -170, 70 }, m_openTransition)), ColorF(0.2));
+			FontAsset(U"Bold")(music[U"title"].getString()).draw(Math::Lerp(25, 30, m_openTransition), Arg::leftCenter(Vec2{ -230, 17 }.lerp(Vec2{ -170, 70 }, m_openTransition)), ColorF(0.2));
 			FontAsset(U"Regular")(music[U"artist"].getString()).draw(Math::Lerp(15, 20, m_openTransition), Arg::leftCenter(Vec2{ -230, 40 }.lerp(Vec2{ -170, 120 }, m_openTransition)), ColorF(0.2));
 
 
-			//FontAsset(U"GenreList")(music[U"title"].getString()).draw(25, Arg::leftCenter(-230, 17), ColorF(0.2));
+			//FontAsset(U"Bold")(music[U"title"].getString()).draw(25, Arg::leftCenter(-230, 17), ColorF(0.2));
 			//FontAsset(U"Regular")(music[U"artist"].getString()).draw(15, Arg::leftCenter(-230, 40), ColorF(0.2));
 
 			ScopedColorMul2D colorMul(ColorF(1, 1 - m_openTransition));

@@ -61,7 +61,7 @@ void AlbumListScene::draw(MusicMenu& musicMenu, const Audio& bgm) {
 			const Vec2 iconCenter = Vec2(250 + x_i * 450, 250 + y_i * 450);
 			Transformer2D albumTf(Mat3x2::Translate(iconCenter), TransformCursor::Yes);
 
-			FontAsset(U"GenreList")(album[U"title"].getString()).draw(30, Arg::center(0, 250), ColorF(0.3));
+			FontAsset(U"Bold")(album[U"title"].getString()).draw(30, Arg::center(0, 250), ColorF(0.3));
 
 			Transformer2D albumTf2(Mat3x2::Scale(albumIcon.scale).translated(albumIcon.pos), TransformCursor::Yes);
 			albumRoundRect.drawShadow({ 0, 3 }, 5, 5, ColorF(0.7, 0.3));
