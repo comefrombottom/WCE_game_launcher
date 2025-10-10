@@ -119,9 +119,14 @@ void AllIllustrationScene::draw(IllustrationMenu& illustrationMenu)
 			double y = scaledRect.bottomY() + 15;
 			if (title) {
 				const auto& font = FontAsset(U"Bold");
-				RectF titleRect = font(title).draw(30, Arg::topLeft(scaledRect.x, y), Palette::Black);
-				PrintDebug(titleRect.h);
-				y += titleRect.h + 5;
+				Vec2 titleRectSize = font(title).region(30).size;
+				if (titleRectSize.x > rect.w) { // 収まらない場合
+					font(title).draw(30, RectF{ scaledRect.x, y, rect.w, titleRectSize.y }, Palette::Black);
+				}
+				else {
+					font(title).draw(30, Arg::topLeft(scaledRect.x, y), Palette::Black);
+				}
+				y += titleRectSize.y + 5;
 			}
 
 			String authorName = illustJSON[U"author"].getOr<String>(U"");
