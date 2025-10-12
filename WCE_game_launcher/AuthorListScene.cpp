@@ -2,18 +2,28 @@
 #include "AuthorListScene.h"
 #include "IllustrationMenu.h"
 
-AuthorListScene::AuthorListScene()
+AuthorListScene::AuthorListScene(const RectF& sceneRect, IllustrationMenu& illustrationMenu)
+	: m_sceneRect(sceneRect)
 {
-	scrollBar = ScrollBar(RectF(Scene::Width() - 430 - 12, 5, 10, Scene::Height() - UI::menuBarHeight - 5 * 2), Scene::Height() - UI::menuBarHeight, 1000);
+
+	std::tie(m_upperAreaRect, m_authorAreaRect) = separateRect(m_sceneRect, Arg::top = upperAreaHeight);
+
+	double pageHeight = authorOneHeight * illustrationMenu.json[U"authorTable"].size();
+
+	scrollBar = ScrollBar(layoutRect(m_authorAreaRect, Arg::right = 2, Arg::top = 5, Arg::bottom = 5, 10), m_authorAreaRect.h, pageHeight);
 }
 
 void AuthorListScene::update(SingleUseCursorPos& cursorPos, IllustrationMenu& illustrationMenu)
 {
-	RectF area(0, upperAreaHeight, Scene::Width() - 430, Scene::Height() - upperAreaHeight - UI::menuBarHeight);
+	//RectF area(0, upperAreaHeight, Scene::Width() - 430, Scene::Height() - upperAreaHeight - UI::menuBarHeight);
+
+	if (cursorPos and m_upperAreaRect.mouseOver()) {
+		cursorPos.use();
+	}
 
 	scrollBar.update(cursorPos);
 	{
-		Transformer2D cursorPosTransformer(Mat3x2::Translate(area.pos), TransformCursor::Yes);
+		Transformer2D cursorPosTransformer(Mat3x2::Translate(m_authorAreaRect.pos), TransformCursor::Yes);
 		{
 			auto tf = scrollBar.createTransformer();
 
@@ -35,6 +45,7 @@ void AuthorListScene::update(SingleUseCursorPos& cursorPos, IllustrationMenu& il
 			}
 			if (mouseOveredAuthorID and MouseL.down()) {
 				illustrationMenu.selectedAuthorID = mouseOveredAuthorID;
+				illustrationMenu.authorSelectedScene.init(mouseOveredAuthorID);
 			}
 
 		}
@@ -43,25 +54,24 @@ void AuthorListScene::update(SingleUseCursorPos& cursorPos, IllustrationMenu& il
 
 void AuthorListScene::draw(IllustrationMenu& illustrationMenu)
 {
-	RectF area(0, upperAreaHeight, Scene::Width() - 430, Scene::Height() - upperAreaHeight - UI::menuBarHeight);
-	area.draw(ColorF(1));
+	// RectF area(0, upperAreaHeight, Scene::Width() - 430, Scene::Height() - upperAreaHeight - UI::menuBarHeight);
+	m_authorAreaRect.draw(ColorF(1));
 	{
-		Transformer2D cursorPosTransformer(Mat3x2::Translate(area.pos), TransformCursor::Yes);
+		Transformer2D cursorPosTransformer(Mat3x2::Translate(m_authorAreaRect.pos), TransformCursor::Yes);
 		{
 			auto tf = scrollBar.createTransformer();
 			size_t i = 0;
 			for (auto [authorID, author] : illustrationMenu.json[U"authorTable"]) {
 				if (mouseOveredIndex and *mouseOveredIndex == i) {
-					RectF(40, i * authorOneHeight, area.w, authorOneHeight).rounded(10).draw(ColorF(0.7, 0.5));
+					RectF(40, i * authorOneHeight, m_authorAreaRect.w, authorOneHeight).rounded(10).draw(ColorF(0.7, 0.5));
 				}
 				FontAsset(U"Game.Desc")(authorID).draw(Arg::leftCenter(70, (i + 0.5) * authorOneHeight), ColorF(0.3));
-				Line{ 50, (i + 1) * authorOneHeight, area.w, (i + 1) * authorOneHeight }.draw(1, ColorF(0.7));
+				Line{ 50, (i + 1) * authorOneHeight, m_authorAreaRect.w, (i + 1) * authorOneHeight }.draw(1, ColorF(0.7));
 				i++;
 			}
 		}
 	}
 	scrollBar.draw();
-	Rect upperArea(0, 0, Scene::Width() - 430, upperAreaHeight);
-	upperArea.drawShadow({}, 5, 5, ColorF(0.7, 0.3));
-	upperArea.draw(ColorF(0.96, 0.99, 0.95));
+	m_upperAreaRect.drawShadow({}, 5, 5, ColorF(0.7, 0.3));
+	m_upperAreaRect.draw(ColorF(0.96, 0.99, 0.95));
 }

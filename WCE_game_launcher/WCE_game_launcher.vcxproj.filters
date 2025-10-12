@@ -911,5 +911,8 @@
     <ClInclude Include="Master.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="layoutRect.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

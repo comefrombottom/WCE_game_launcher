@@ -231,21 +231,6 @@ inline Array<Game> LoadGames()
 	return games.sort_by([](const Game& a, const Game& b) { return a.priority > b.priority; });
 }
 
-namespace TScene
-{
-	inline Vec2 SizeF() {
-		return Scene::Size() - Graphics2D::GetLocalTransform().transformPoint(Vec2{ 0,0 });
-	}
-
-	inline RectF Rect() {
-		return{ 0,0, TScene::SizeF() };
-	}
-
-	inline Vec2 Center() {
-		return TScene::SizeF() / 2;
-	}
-}
-
 class ScopedRenderTarget2DWithTransformReset :Uncopyable {
 public:
 	[[nodiscard]]

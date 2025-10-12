@@ -5,6 +5,7 @@
 
 class IllustrationMenu;
 class IllustViewer {
+	RectF m_sceneRect{};
 	String illustrationID;
 	Vec2 pos = {};
 	double width = 0;
@@ -13,9 +14,9 @@ class IllustViewer {
 
 	IconButton closeButton{ RectF(Arg::center(Scene::Width() - 90,90), 100, 100), Texture(0xF0156_icon, 60) };
 
-	Vec2 sceneSize{};
 public:
-	IllustViewer();
+	IllustViewer() = default;
+	IllustViewer(const RectF& sceneRect);
 
 	void setIllustrationID(const String& id) {
 		illustrationID = id;

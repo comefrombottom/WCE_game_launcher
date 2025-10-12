@@ -5,6 +5,8 @@
 
 void GameMenu::update(SingleUseCursorPos& cursorPos, Master& master)
 {
+	Transformer2D t(Mat3x2::Translate(0, UI::menuBarHeight), TransformCursor::Yes);
+
 	// 現在選択されているゲーム
 	const Game& game = games[selectGameIndex];
 	///////////////////////////////////////////////

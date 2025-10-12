@@ -144,6 +144,7 @@ public:
 	}
 
 	void update(SingleUseCursorPos& cursorPos, Audio& bgm) {
+		Transformer2D t(Mat3x2::Translate(0, UI::menuBarHeight), TransformCursor::Yes);
 
 		//Print << bgm.posSample() << U" / " << bgm.samples();
 		//Print <<U"empty: {}, "_fmt(bgm.isEmpty()) <<U"active :{}, "_fmt(bgm.isActive()) << U"paused: {}, "_fmt(bgm.isPaused()) << U"playing: {}, "_fmt(bgm.isPlaying());
@@ -185,6 +186,7 @@ public:
 	}
 
 	void draw(const Audio& bgm) {
+		Transformer2D t(Mat3x2::Translate(0, UI::menuBarHeight), TransformCursor::Yes);
 		{
 			Transformer2D genleTf(Mat3x2::Translate(430, 0), TransformCursor::Yes);
 

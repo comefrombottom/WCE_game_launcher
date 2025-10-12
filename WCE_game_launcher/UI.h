@@ -54,14 +54,14 @@ struct ScrollBar
 		return viewHeight < pageHeight;
 	}
 
-	bool isSliderMouseOver() const
+	bool isSliderMouseOver(SingleUseCursorPos& cursorPos) const
 	{
-		return sliderRect().stretched(5).mouseOver();
+		return cursorPos and sliderRect().stretched(5).mouseOver();
 	}
 
-	bool isSliderThick() const
+	bool isSliderThick(SingleUseCursorPos& cursorPos) const
 	{
-		return isSliderMouseOver() || dragOffset;
+		return isSliderMouseOver(cursorPos) || dragOffset;
 	}
 
 	Transformer2D createTransformer() const
@@ -115,12 +115,10 @@ struct ScrollBar
 		}
 
 
-		if (isSliderMouseOver() and MouseL.down())
+		if (isSliderMouseOver(cursorPos) and MouseL.down())
 		{
-			if (cursorPos.has_value()) {
-				dragOffset = Cursor::PosF().y - sliderY();
-				cursorPos.dragOn();
-			}
+			dragOffset = Cursor::PosF().y - sliderY();
+			cursorPos.dragOn();
 		}
 		else if (dragOffset && MouseL.up())
 		{
@@ -143,9 +141,9 @@ struct ScrollBar
 			viewVelocity = 0;
 		}
 
-		sliderWidthTransition.update(isSliderThick() and cursorPos);
+		sliderWidthTransition.update(isSliderThick(cursorPos));
 
-		if (isSliderMouseOver() && cursorPos.has_value()) {
+		if (isSliderMouseOver(cursorPos)) {
 			cursorPos.use();
 		}
 
@@ -763,8 +761,8 @@ public:
 		}
 
 
-		double selectedLineBegin01 = Math::Lerp<double, double, double>(prevSelectGenreIndex, selectGenreIndex, EaseInOutQuart(Min(timeAfterChangeIndex * 3, 1.0)));
-		double selectedLineEnd01 = Math::Lerp<double, double, double>(prevSelectGenreIndex, selectGenreIndex, EaseOutQuart(Min(timeAfterChangeIndex * 3, 1.0)));
+		double selectedLineBegin01 = Math::Lerp<double, double, double>(static_cast<double>(prevSelectGenreIndex), static_cast<double>(selectGenreIndex), EaseInOutQuart(Min(timeAfterChangeIndex * 3, 1.0)));
+		double selectedLineEnd01 = Math::Lerp<double, double, double>(static_cast<double>(prevSelectGenreIndex), static_cast<double>(selectGenreIndex), EaseOutQuart(Min(timeAfterChangeIndex * 3, 1.0)));
 
 		if (prevSelectGenreIndex > selectGenreIndex) {
 			std::swap(selectedLineBegin01, selectedLineEnd01);
@@ -917,6 +915,7 @@ class OnlyIconButton {
 	bool clicked = false;
 
 public:
+	OnlyIconButton() = default;
 	OnlyIconButton(const RectF& rect, const Texture& texture)
 		:m_rect(rect)
 		, m_texture(texture)

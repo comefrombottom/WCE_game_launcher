@@ -3,18 +3,31 @@
 class IllustrationMenu;
 
 class AuthorSelectedScene {
-	OnlyIconButton backToAuthorListButton{ RectF(Arg::center(40,70 / 2), 50, 50), Texture{0xf053_icon, 50} };
+	RectF m_sceneRect{};
+	RectF m_upperAreaRect{};
+	RectF m_authorAreaRect{};
+	OnlyIconButton backToAuthorListButton;
 	ScrollBar scrollBar;
 	Optional<size_t> mouseOveredIndex;
 	static constexpr double upperAreaHeight = 70;
-	static constexpr double authorInfoAreaHeight = 150;
+	static constexpr double authorInfoAreaHeight = 250;
 
 	static constexpr size_t columns = 3;
 
 	HashTable<String, Array<PositionedIllust>> positionedIllustrations;
+
+	HashTable<String, double> pageHeights;
 public:
 	AuthorSelectedScene() = default;
-	AuthorSelectedScene(IllustrationMenu& illustrationMenu);
+	AuthorSelectedScene(const RectF& sceneRect, IllustrationMenu& illustrationMenu);
+
+	void init(const String& authorID) {
+		mouseOveredIndex.reset();
+
+		scrollBar.pageHeight = pageHeights[authorID];
+		scrollBar.viewTop = 0;
+	}
+
 	void update(SingleUseCursorPos& cursorPos, IllustrationMenu& illustrationMenu);
 	void draw(IllustrationMenu& illustrationMenu);
 };

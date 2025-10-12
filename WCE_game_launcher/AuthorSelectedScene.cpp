@@ -4,9 +4,13 @@
 
 
 
-AuthorSelectedScene::AuthorSelectedScene(IllustrationMenu& illustrationMenu)
+AuthorSelectedScene::AuthorSelectedScene(const RectF& sceneRect, IllustrationMenu& illustrationMenu)
+	: m_sceneRect(sceneRect)
 {
-	scrollBar = ScrollBar(RectF(Scene::Width() - 430 - 12, 5, 10, Scene::Height() - UI::menuBarHeight - 5 * 2), Scene::Height() - UI::menuBarHeight, 1000);
+
+	std::tie(m_upperAreaRect, m_authorAreaRect) = separateRect(m_sceneRect, Arg::top = upperAreaHeight);
+
+	backToAuthorListButton = OnlyIconButton(layoutRect(m_upperAreaRect, Arg::left = 15, 50, 50), Texture{ 0xf053_icon, 50 });
 
 	constexpr double paddingX = 50.0;
 	constexpr double paddingY = 50.0;
@@ -37,14 +41,16 @@ AuthorSelectedScene::AuthorSelectedScene(IllustrationMenu& illustrationMenu)
 			double height = texture.height() * scale;
 			const size_t col = getMinColmn();
 			const double x = paddingX + col * (oneWidth + paddingX);
-			const double y = bottomYs[col] + paddingY;
-			positionedIllustrations[authorId].push_back(PositionedIllust{id, Vec2{x + oneWidth / 2,y + height / 2}, scale ,scaleWhenMouseOver});
+			const double y = bottomYs[col] + paddingY + authorInfoAreaHeight;
+			positionedIllustrations[authorId].push_back(PositionedIllust{id, Vec2{x + oneWidth / 2,y + height / 2} + m_authorAreaRect.pos, scale ,scaleWhenMouseOver});
 			bottomYs[col] += paddingY + height;
 		}
 
-		//double maxBottomY = *std::max_element(bottomYs.begin(), bottomYs.end());
-		//scrollBar = ScrollBar(RectF(Scene::Width() - 430 - 12, 5, 10, Scene::Height() - UI::menuBarHeight - 5 * 2), Scene::Height() - UI::menuBarHeight, maxBottomY + paddingY);
+		double maxBottomY = *std::max_element(bottomYs.begin(), bottomYs.end());
+		pageHeights[authorId] = maxBottomY + paddingY;
 	}
+
+	scrollBar = ScrollBar(layoutRect(m_authorAreaRect, Arg::right = 2, Arg::top = 5, Arg::bottom = 5, 10), m_authorAreaRect.h, 1000);
 }
 
 void AuthorSelectedScene::update(SingleUseCursorPos& cursorPos, IllustrationMenu& illustrationMenu)
@@ -54,20 +60,21 @@ void AuthorSelectedScene::update(SingleUseCursorPos& cursorPos, IllustrationMenu
 		return;
 	}
 
-	RectF area(0, upperAreaHeight, Scene::Width() - 430, Scene::Height() - upperAreaHeight - UI::menuBarHeight);
+	if (cursorPos and m_upperAreaRect.mouseOver()) {
+		cursorPos.use();
+	}
+
 
 	scrollBar.update(cursorPos);
 	{
-		Transformer2D cursorPosTransformer(Mat3x2::Translate(area.pos), TransformCursor::Yes);
+		//Transformer2D cursorPosTransformer(Mat3x2::Translate(area.pos), TransformCursor::Yes);
 		{
 			auto tf = scrollBar.createTransformer();
 
 			mouseOveredIndex.reset();
 
-			PrintDebug(Cursor::PosF());
 			for (auto& illust : positionedIllustrations[*illustrationMenu.selectedAuthorID]) {
 				RectF rect{ Arg::center = illust.center, illustrationMenu.illustrationImages[illust.id].size() * illust.scale };
-				PrintDebug(rect);
 				illust.mouseOvered = cursorPos and rect.mouseOver();
 				if (illust.mouseOvered) {
 					cursorPos.use();
@@ -76,7 +83,6 @@ void AuthorSelectedScene::update(SingleUseCursorPos& cursorPos, IllustrationMenu
 					illust.pressed = true;
 					cursorPos.dragOn();
 				}
-				PrintDebug(illust.pressed);
 
 				if (illust.pressed and (MouseL.up() or not rect.mouseOver())) {
 					illust.pressed = false;
@@ -104,15 +110,21 @@ void AuthorSelectedScene::update(SingleUseCursorPos& cursorPos, IllustrationMenu
 
 void AuthorSelectedScene::draw(IllustrationMenu& illustrationMenu)
 {
-	Rect musicListArea(0, upperAreaHeight, Scene::Width() - 430, Scene::Height() - upperAreaHeight - UI::menuBarHeight);
-	musicListArea.draw(ColorF(1));
-	const RectF backRect = TScene::Rect();
+	m_authorAreaRect.draw(ColorF(1));
 	{
-		Transformer2D cursorPosTransformer(Mat3x2::Translate(musicListArea.pos), TransformCursor::Yes);
+		// Transformer2D cursorPosTransformer(Mat3x2::Translate(musicListArea.pos), TransformCursor::Yes);
 		{
 			auto tf = scrollBar.createTransformer();
+			auto font = FontAsset(U"Regular");
 
-			RectF viewRect = backRect;
+			TextureAsset(U"Icon.user").resized(70).draw(Arg::leftCenter(m_authorAreaRect.pos + Vec2(70, authorInfoAreaHeight / 2)), ColorF(0.5));
+
+			font(*illustrationMenu.selectedAuthorID).draw(70, Arg::leftCenter(m_authorAreaRect.pos + Vec2(150, authorInfoAreaHeight / 2)), ColorF(0.5));
+
+
+			Line(m_authorAreaRect.pos + Vec2(50, authorInfoAreaHeight), m_authorAreaRect.tr() + Vec2(-50, authorInfoAreaHeight)).draw(ColorF(0.3));
+
+			RectF viewRect = m_authorAreaRect;
 			viewRect.y += scrollBar.viewTop;
 
 			for (const auto& illust : positionedIllustrations[*illustrationMenu.selectedAuthorID]) {
@@ -128,8 +140,7 @@ void AuthorSelectedScene::draw(IllustrationMenu& illustrationMenu)
 		}
 	}
 	scrollBar.draw();
-	Rect upperArea(0, 0, Scene::Width() - 430, upperAreaHeight);
-	upperArea.drawShadow({}, 5, 5, ColorF(0.7, 0.3));
-	upperArea.draw(ColorF(0.96, 0.99, 0.95));
+	m_upperAreaRect.drawShadow({}, 5, 5, ColorF(0.7, 0.3));
+	m_upperAreaRect.draw(ColorF(0.96, 0.99, 0.95));
 	backToAuthorListButton.draw(Palette::Limegreen);
 }

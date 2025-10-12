@@ -353,6 +353,7 @@
     <ClInclude Include="GameMenu.h" />
     <ClInclude Include="IllustrationMenu.h" />
     <ClInclude Include="IllustViewer.h" />
+    <ClInclude Include="layoutRect.h" />
     <ClInclude Include="Master.h" />
     <ClInclude Include="MusicControlPanel.h" />
     <ClInclude Include="MusicMenu.h" />

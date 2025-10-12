@@ -115,6 +115,8 @@ public:
 
 	void draw() {
 
+		Transformer2D t(Mat3x2::Translate(0, UI::menuBarHeight), TransformCursor::Yes);
+
 		const Game& game = games[selectGameIndex];
 
 		///////////////////////////////////////////////

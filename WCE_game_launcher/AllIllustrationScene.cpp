@@ -2,7 +2,8 @@
 #include "AllIllustrationScene.h"
 #include "IllustrationMenu.h"
 
-AllIllustrationScene::AllIllustrationScene(IllustrationMenu& illustrationMenu)
+AllIllustrationScene::AllIllustrationScene(const RectF& sceneRect, IllustrationMenu& illustrationMenu)
+	: m_sceneRect(sceneRect)
 {
 	Array<String> allID;
 	for (auto [id, illustration] : illustrationMenu.json[U"illustTable"]) {
@@ -23,7 +24,7 @@ AllIllustrationScene::AllIllustrationScene(IllustrationMenu& illustrationMenu)
 		));
 		};
 
-	const double oneWidth = (Scene::Width() - 430 - paddingX * (columns + 1)) / columns;
+	const double oneWidth = (m_sceneRect.w - paddingX * (columns + 1)) / columns;
 
 	for (const auto& id : allID) {
 		Texture& texture = illustrationMenu.illustrationImages[id];
@@ -34,7 +35,7 @@ AllIllustrationScene::AllIllustrationScene(IllustrationMenu& illustrationMenu)
 		const double x = paddingX + col * (oneWidth + paddingX);
 		double y = bottomYs[col] + paddingY;
 
-		positionedIllusts.push_back(PositionedIllust{ id, Vec2{ x + oneWidth / 2,y + height / 2 }, scale ,scaleWhenMouseOver });
+		positionedIllusts.push_back(PositionedIllust{ id, Vec2{ x + oneWidth / 2,y + height / 2 } + m_sceneRect.pos, scale ,scaleWhenMouseOver });
 
 		auto illustJSON = illustrationMenu.json[U"illustTable"][id];
 
@@ -56,12 +57,12 @@ AllIllustrationScene::AllIllustrationScene(IllustrationMenu& illustrationMenu)
 	}
 
 	double maxBottomY = *std::max_element(bottomYs.begin(), bottomYs.end());
-	scrollBar = ScrollBar(RectF(Scene::Width() - 430 - 12, 5, 10, Scene::Height() - UI::menuBarHeight - 5 * 2), Scene::Height() - UI::menuBarHeight, maxBottomY + paddingY);
+	scrollBar = ScrollBar(layoutRect(m_sceneRect, Arg::right = 2, Arg::top = 5, Arg::bottom = 5, 10), m_sceneRect.h, maxBottomY + paddingY);
 }
 
 void AllIllustrationScene::update(SingleUseCursorPos& cursorPos, IllustrationMenu& illustrationMenu)
 {
-	bool sceneMouseOvered = cursorPos and TScene::Rect().mouseOver();
+	bool sceneMouseOvered = cursorPos and m_sceneRect.mouseOver();
 	scrollBar.update(cursorPos, sceneMouseOvered * Mouse::Wheel());
 	{
 		auto tf = scrollBar.createTransformer();
@@ -89,16 +90,16 @@ void AllIllustrationScene::update(SingleUseCursorPos& cursorPos, IllustrationMen
 			illust.mouseOverTransition = Math::SmoothDamp(illust.mouseOverTransition, illust.mouseOvered or illust.pressed ? 1.0 : 0.0, illust.mouseOverTransitionVel, 0.1);
 		}
 	}
+
 }
 
 void AllIllustrationScene::draw(IllustrationMenu& illustrationMenu)
 {
-	RectF backRect = TScene::Rect();
-	backRect.draw(ColorF(1));
+	m_sceneRect.draw(ColorF(1));
 	{
 		auto tf = scrollBar.createTransformer();
 
-		RectF viewRect = backRect;
+		RectF viewRect = m_sceneRect;
 		viewRect.y += scrollBar.viewTop;
 
 		for (const auto& illust : positionedIllusts) {
@@ -119,14 +120,16 @@ void AllIllustrationScene::draw(IllustrationMenu& illustrationMenu)
 			double y = scaledRect.bottomY() + 15;
 			if (title) {
 				const auto& font = FontAsset(U"Bold");
-				Vec2 titleRectSize = font(title).region(30).size;
-				if (titleRectSize.x > rect.w) { // 収まらない場合
-					font(title).draw(30, RectF{ scaledRect.x, y, rect.w, titleRectSize.y }, Palette::Black);
+				RectF titleRect = font(title).region(30,scaledRect.x, y);
+				if (viewRect.intersects(titleRect)) {
+					if (titleRect.w > rect.w) { // 収まらない場合
+						font(title).draw(30, RectF{ scaledRect.x, y, rect.w, titleRect.h }, Palette::Black);
+					}
+					else {
+						font(title).draw(30, Arg::topLeft(scaledRect.x, y), Palette::Black);
+					}
 				}
-				else {
-					font(title).draw(30, Arg::topLeft(scaledRect.x, y), Palette::Black);
-				}
-				y += titleRectSize.y + 5;
+				y += titleRect.h + 5;
 			}
 
 			String authorName = illustJSON[U"author"].getOr<String>(U"");

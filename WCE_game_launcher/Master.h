@@ -5,6 +5,7 @@
 #include "MusicMenu.h"
 #include "IllustrationMenu.h"
 #include "MusicControlPanel.h"
+#include "layoutRect.h"
 
 class Master {
 public:
@@ -43,6 +44,10 @@ public:
 
 public:
 	Master() {
+		auto [menuBarRect, otherRect] = separateRect(Scene::Rect(), Arg::top(UI::menuBarHeight));
+
+
+		illustrationMenu = IllustrationMenu{ otherRect };
 		GlobalAudio::SetVolume(speakerButton.isMute() ? 0 : volumeSlider.value());
 	}
 
@@ -80,7 +85,7 @@ public:
 
 			{
 				{
-					Transformer2D t(Mat3x2::Translate(0, UI::menuBarHeight), TransformCursor::Yes);
+					// Transformer2D t(Mat3x2::Translate(0, UI::menuBarHeight), TransformCursor::Yes);
 					switch (menuSelector.getSelectMenuIndex())
 					{
 					case 0:
@@ -125,7 +130,7 @@ public:
 
 
 				{
-					Transformer2D t(Mat3x2::Translate(0, UI::menuBarHeight), TransformCursor::Yes);
+					// Transformer2D t(Mat3x2::Translate(0, UI::menuBarHeight), TransformCursor::Yes);
 					switch (menuSelector.getSelectMenuIndex())
 					{
 					case 0:

@@ -5,6 +5,8 @@
 
 class IllustrationMenu;
 class AllIllustrationScene {
+	RectF m_sceneRect{};
+
 	ScrollBar scrollBar;
 	Optional<size_t> mouseOveredIndex;
 
@@ -14,7 +16,7 @@ class AllIllustrationScene {
 
 public:
 	AllIllustrationScene() = default;
-	AllIllustrationScene(IllustrationMenu& illustrationMenu);
+	AllIllustrationScene(const RectF& sceneRect, IllustrationMenu& illustrationMenu);
 	void update(SingleUseCursorPos& cursorPos, IllustrationMenu& illustrationMenu);
 	void draw(IllustrationMenu& illustrationMenu);
 };
