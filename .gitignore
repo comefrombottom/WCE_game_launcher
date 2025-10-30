@@ -390,8 +390,11 @@ FodyWeavers.xsd
 /WCE_game_launcher/App/games/[19] Shinobi
 /WCE_game_launcher/App/games/[01]Fight T.Y
 /WCE_game_launcher/App/games/[01]Fight T.Y
-/WCE_game_launcher/App/games/[01]Fight T.Y/Fight_TY.exe
 /WCE_game_launcher/App/games/[01]Fight T.Y
-/WCE_game_launcher/App/games/[08]透明鬼ごっこ
-/WCE_game_launcher/App/games
-/WCE_game_launcher/App/illustrations
+/WCE_game_launcher/App/games/[01]Fight T.Y
+/WCE_game_launcher/App/games/[01]Fight T.Y
+/WCE_game_launcher/App/games/[03]Bottle-of-Star
+/WCE_game_launcher/App/games/[01]Fight T.Y
+/WCE_game_launcher/App/illustrations/*
+!/WCE_game_launcher/App/illustrations/settings.json
+/WCE_game_launcher/App/games_old_2024
