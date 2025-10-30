@@ -1,0 +1,53 @@
+{
+  "illustTable": {
+    "WCEランチャートップ2025": {
+      "title": "WCEランチャートップ2025",
+      "author": "ヒカル",
+      "path": "WCE_2025_lancher_top.jpg",
+      "interpolation": "linear"
+    },
+    "理工展ポスター2025": {
+      "author": "リゼ",
+      "path": "rikoten_wce_poster_2025.jpg"
+    },
+    "矢口かえで_2025_だんごむし": {
+      "author": "だんごむし",
+      "path": "矢口かえで_2025_だんごむし.jpg"
+    },
+    "矢口かえで_2025_ぬま": {
+      "author": "ぬま",
+      "path": "矢口かえで_2025_ぬま.png"
+    },
+    "矢口かえで_2025_リゼ": {
+      "author": "リゼ",
+      "path": "矢口かえで_2025_リゼ.png"
+    },
+    "WCEちゃん_んぽよ": {
+      "author": "んぽよ。",
+      "path": "WCEちゃん_んぽよ.png"
+    },
+    "WCEちゃん_ボトム": {
+      "title": "タイトルもつけれる",
+      "author": "ボトム",
+      "path": "WCEちゃん_ボトム.png"
+    },
+    "WCEちゃん_リゼ": {
+      "author": "リゼ",
+      "path": "WCEちゃん_リゼ.jpg"
+    },
+    "WCEちゃん_林蔵": {
+      "author": "林蔵",
+      "path": "WCEちゃん_林蔵.jpg"
+    },
+    "WCEちゃん_ヒカル": {
+      "author": "ヒカル",
+      "path": "WCEちゃん_ヒカル.jpg"
+    },
+    "WCEちゃん_0_リゼ": {
+      "author": "リゼ",
+      "path": "WCEちゃん_0_リゼ.png"
+    }
+
+  }
+}
+

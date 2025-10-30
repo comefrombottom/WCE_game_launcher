@@ -1,0 +1,6 @@
+﻿{
+  "body": "{\"holding\":\"none\",\"marked\":[[false,false,false],[false,false,false],[false,false,false]],\"next\":[60,50,75,80],\"phase\":6,\"pindex\":0,\"rane\":0,\"score\":284,\"tiles\":[[39,2,11],[5,7,5],[3,11,7]],\"wait\":0.0}",
+  "init": "{\"enableHold\":true,\"size\":3}",
+  "scores": "[284,0,0,0,0,0,0,0,0,0]",
+  "version": "1"
+}
