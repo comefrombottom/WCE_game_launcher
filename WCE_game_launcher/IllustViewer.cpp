@@ -18,6 +18,9 @@ void IllustViewer::initWith(IllustrationMenu& illustrationMenu, const String& id
 	width = scaledSize.x;
 	targetWidth = scaledSize.x;
 	widthVelocity = 0;
+
+	illustrationAuthorID = illustrationMenu.json[U"illustTable"][illustrationID][U"author"].getOr<String>(U"");
+	illustrationTitle = illustrationMenu.json[U"illustTable"][illustrationID][U"title"].getOr<String>(U"");
 }
 
 void IllustViewer::update(SingleUseCursorPos& cursorPos, IllustrationMenu& illustrationMenu)
@@ -64,6 +67,19 @@ void IllustViewer::update(SingleUseCursorPos& cursorPos, IllustrationMenu& illus
 void IllustViewer::draw(IllustrationMenu& illustrationMenu)
 {
 	m_sceneRect.draw(ColorF(0, 0.8));
+
+	// title
+	double y = m_sceneRect.pos.y + 10;
+	if (illustrationTitle) {
+		FontAsset(U"Bold")(illustrationTitle).draw(40, Vec2{ m_sceneRect.pos.x + 10,y }, Palette::White);
+		y += 50;
+	}
+	if (illustrationAuthorID) {
+		FontAsset(U"Regular")(U"作者: " + illustrationAuthorID).draw(30, Vec2{ m_sceneRect.pos.x + 10, y }, Palette::White);
+		y += 30;
+	}
+
+
 	Texture& texture = illustrationMenu.illustrationImages[illustrationID];
 	texture.scaled(width / texture.width()).draw(pos);
 

@@ -7,6 +7,8 @@ class IllustrationMenu;
 class IllustViewer {
 	RectF m_sceneRect{};
 	String illustrationID;
+	String illustrationTitle;
+	String illustrationAuthorID;
 	Vec2 pos = {};
 	double width = 0;
 	double widthVelocity = 0;
